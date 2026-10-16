@@ -22,6 +22,8 @@ htmlcov/
 .impeccable.md
 .vscode/
 .idea/
+notes/
+note/
 *.swp
 *.swo
 

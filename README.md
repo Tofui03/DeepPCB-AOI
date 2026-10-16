@@ -1,30 +1,80 @@
-# DeepPCB-AOI
+<div id="top">
 
-> **Industrial Automated Optical Inspection (AOI) & IPC-A-600 Semantic Triage Platform**  
-> *Combining sub-4ms ONNX edge vision, deterministic geometric compliance rules, and safety-critical agent guardrails for high-throughput SMT production lines.*
+<div align="center">
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-1.17+-005CED.svg?logo=onnx&logoColor=white)](https://onnxruntime.ai/)
-[![IPC-A-600](https://img.shields.io/badge/IPC--A--600-Class_2_%26_3-orange.svg)]()
-[![Tests](https://img.shields.io/badge/tests-84%20passed-brightgreen.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+# DEEPPCB-AOI
 
----
+<em>Industrial Automated Optical Inspection (AOI) & IPC-A-600 Semantic Triage Platform</em>
 
-## Highlights & Architectural Principles
+<!-- BADGES -->
+<p align="center">
+  <img src="https://img.shields.io/github/license/Tofui03/DeepPCB-AOI?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
+  <img src="https://img.shields.io/github/last-commit/Tofui03/DeepPCB-AOI?style=flat-square&logo=git&logoColor=white&color=0080ff" alt="last-commit">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat-square&logo=FastAPI&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/ONNX_Runtime-1.17+-005CED.svg?style=flat-square&logo=ONNX&logoColor=white" alt="ONNX Runtime">
+  <img src="https://img.shields.io/badge/IPC--A--600-Class_2_%26_3-orange.svg?style=flat-square" alt="IPC-A-600">
+  <img src="https://img.shields.io/badge/tests-84%20passed-brightgreen.svg?style=flat-square" alt="tests">
+</p>
 
-DeepPCB-AOI implements the **"10% Model + 90% Deterministic Harness"** methodology for mission-critical manufacturing:
-
-- ⚡ **Sub-4ms Edge Preprocessing:** Aligned differential template subtraction and morphological operations powered by ONNX Runtime at **263 FPS**.
-- 🛡️ **Zero-Token Fast-Path Bypass:** Boards with zero defect candidates bypass all LLM/VLM reasoning instantly (`<15ms` total turnaround time, zero API token cost).
-- 📐 **Ground-Truth IPC-A-600 Rules:** Geometric verification against IPC Class 2 (Dedicated Service) and Class 3 (High Reliability) tolerances before any heuristic triage.
-- 🔒 **Deterministic Python Guardrails:** Hard safety overrides prevent false passes on fatal electrical defects (`Open` / `Short`) and automatically halt the line when batch repeat defects exceed thresholds ($\ge 3$).
-- 🖥️ **Swiss-Industrial Machine Vision Console:** Zero-border-radius, high-density telemetry UI with interactive dual-pane alignment, reticle HUD, and Class 2 / 3 toggles.
+</div>
+</div>
 
 ---
 
-## System Architecture
+## 📄 Table of Contents
+
+- [✨ Overview](#-overview)
+- [📌 Key Features](#-key-features)
+- [📐 6 Canonical Defect Classes](#-6-canonical-defect-classes)
+- [🏛️ System Architecture](#️-system-architecture)
+- [📁 Project Structure](#-project-structure)
+    - [📑 Project Index](#-project-index)
+- [🚀 Getting Started](#-getting-started)
+    - [📋 Prerequisites](#-prerequisites)
+    - [⚙️ Installation](#️-installation)
+    - [💻 Usage & Web Console](#-usage--web-console)
+    - [🧪 Testing](#-testing)
+- [📊 IPC-A-600 Compliance Matrix](#-ipc-a-600-compliance-matrix)
+- [🤝 Contributing](#-contributing)
+- [📜 License](#-license)
+
+---
+
+## ✨ Overview
+
+**DeepPCB-AOI** is an industrial Automated Optical Inspection and IPC-A-600 compliance triage agent designed for high-speed Surface Mount Technology (SMT) and bare-board PCB manufacturing lines.
+
+Built on the **"10% Model + 90% Deterministic Harness"** methodology:
+- Computer vision handles high-speed defect localization and pixel measurement deterministically via ONNX Runtime (< 4ms).
+- Python safety guardrails enforce IPC-A-600 standards and line-halt safety policies without relying on unconstrained LLM heuristics.
+
+---
+
+## 📌 Key Features
+
+- ⚡ **Sub-4ms Edge Inference**: Aligned differential template subtraction and morphological analysis powered by ONNX Runtime at **260+ FPS**.
+- 🛡️ **Zero-Token Fast-Path Bypass**: Boards with zero defect candidates bypass LLM/VLM calls instantly (`<15ms` turnaround time, zero API token cost).
+- 📐 **Ground-Truth IPC-A-600 Rule Engine**: Validates defects against verifiable IPC Class 2 (Dedicated Service) and Class 3 (High Reliability) physical criteria.
+- 🔒 **Deterministic Safety Guardrails**: Hard overrides prevent fatal false passes (`Open` / `Short` can never pass). Automatically triggers emergency line halt if batch defect recurrence exceeds $\ge 3$.
+- 🖥️ **Swiss-Industrial Machine Vision Console**: Zero-border-radius, high-density machine telemetry viewport with dual-pane canvas alignment, reticle HUD, and Class 2 / 3 toggles.
+
+---
+
+## 📐 6 Canonical Defect Classes
+
+| Defect Class | Physical Mechanism | Fatal? | IPC-A-600 Class 2 Tolerance | IPC-A-600 Class 3 Tolerance |
+| :--- | :--- | :---: | :--- | :--- |
+| **Open** | Broken conductive trace causing circuit discontinuity | **YES** | 0% reduction allowed (Immediate Scrap) | 0% reduction allowed (Immediate Scrap) |
+| **Short** | Unintended copper bridge between independent traces | **YES** | 0 clearance violation (Immediate Scrap) | 0 clearance violation (Immediate Scrap) |
+| **Mousebite** | Edge nick/erosion reducing cross-sectional trace width | No | Max 20% conductor width reduction | Max 10% conductor width reduction |
+| **Spur** | Sharp copper protrusion reducing dielectric clearance | No | Residual clearance $\ge 70\%$ | Residual clearance $\ge 80\%$ |
+| **Spurious Copper** | Isolated residual copper speck | No | Disconnected speck $\le 150\,\mu\text{m}^2$ | Disconnected speck $\le 50\,\mu\text{m}^2$ |
+| **Pin-hole** | Localized void inside copper trace or pad | No | Area $\le 20\%$ of pad/trace width | Area $\le 10\%$ of pad/trace width |
+
+---
+
+## 🏛️ System Architecture
 
 ```mermaid
 flowchart TD
@@ -43,155 +93,132 @@ flowchart TD
 
 ---
 
-## Performance SLA & Benchmarks
+## 📁 Project Structure
 
-Benchmarked on the standard **DeepPCB** dataset ($640 \times 640$ px industrial board pairs):
-
-| Metric | Measured | Target SLA | Status |
-| :--- | :---: | :---: | :---: |
-| **Edge Vision Latency (p50)** | **3.65 ms** | $< 15.0\text{ ms}$ | Enforced |
-| **Edge Vision Latency (p95)** | **4.76 ms** | $< 15.0\text{ ms}$ | Enforced |
-| **Pipeline Throughput** | **263 FPS** | $> 60\text{ FPS}$ | Exceeded |
-| **Clean Board Token Cost** | **0 Tokens** | 0 Tokens | 100% Bypass |
-| **Automated Test Coverage** | **84 Passing** | 100% Passing | Unit, API & Adversarial |
-
----
-
-## Canonical Defect Taxonomy & IPC-A-600 Tolerance
-
-| Defect Class | Physical Manifestation | IPC Clause | Class 2 Limit | Class 3 Limit | Guardrail Policy |
-| :--- | :--- | :--- | :---: | :---: | :--- |
-| `Open` | Complete trace discontinuity | IPC-A-600 §2.2.1 | `0 px` | `0 px` | **Instant SCRAP** (Never PASS) |
-| `Short` | Unintended copper bridge | IPC-A-600 §2.2.2 | `0 px` | `0 px` | **Instant SCRAP** (Never PASS) |
-| `Mousebite` | Trace edge erosion / reduction | IPC-A-600 §2.2.3 | $\le 20\%$ width | $\le 10\%$ width | REWORK / PASS based on width % |
-| `Spur` | Copper protrusion into spacing | IPC-A-600 §2.2.4 | $\le 20\%$ spacing | $\le 10\%$ spacing | REWORK / PASS based on clearance |
-| `Spurious Copper`| Isolated conductive fragment | IPC-A-600 §2.2.5 | Area $< 50\text{px}^2$ | Area $< 25\text{px}^2$ | SCRAP if bridging risk |
-| `Pin-hole` | Void inside trace or pad | IPC-A-600 §2.2.6 | Area $< 30\text{px}^2$ | Area $< 15\text{px}^2$ | REWORK / PASS based on area |
-
----
-
-## Repository Structure
-
-```
-.
-├── core/
-│   ├── vision/          # Differential preprocessing, morphology, ONNX Runtime detector
-│   ├── tools/           # IPC-A-600 Class 2/3 lookup tables, SQLite batch telemetry store
-│   ├── agent/           # Pydantic schemas, 4-stage StateGraph, deterministic guardrails
-│   └── data/            # DeepPCB pair loader, train/val/test split indexer
-├── api/
-│   └── main.py          # FastAPI service (/api/inspect, /api/agent-triage, /api/benchmark)
-├── web/
-│   └── index.html       # Swiss-industrial dual-pane inspection HUD console
-├── tests/
-│   ├── test_vision.py       # Differential map & ONNX candidate detector tests
-│   ├── test_tools.py        # IPC-A-600 rule engine & batch telemetry tests
-│   ├── test_schemas.py      # Pydantic validation & bounds tests
-│   ├── test_agent_evals.py  # 4-stage state graph & adversarial guardrail evals
-│   └── test_api.py          # End-to-end FastAPI endpoint contract tests
-├── AGENTS.md            # Agent harness constraints & context engineering rules
-└── README.md            # Documentation & engineering reference
+```sh
+└── DeepPCB-AOI/
+    ├── AGENTS.md                  # Context engineering & deterministic harness rules
+    ├── README.md                  # System documentation & quickstart
+    ├── api/
+    │   └── main.py                # FastAPI endpoints (/api/inspect, /api/agent-triage, /api/benchmark)
+    ├── core/
+    │   ├── agent/                 # 4-stage agent pipeline, schemas & safety guardrails
+    │   ├── tools/                 # IPC-A-600 compliance rules & SQLite batch tracker
+    │   └── vision/                # Differential preprocessing & ONNX Runtime detector
+    ├── tests/                     # 84 automated pytest test suites & adversarial evals
+    └── web/
+        └── index.html             # Swiss-Industrial precision machine vision console
 ```
 
+### 📑 Project Index
+
+<details open>
+<summary><b>Module Architecture Details</b></summary>
+<blockquote>
+
+| Module | Component | Primary Responsibility |
+| :--- | :--- | :--- |
+| **`core.vision`** | `diff_preprocess.py` | Aligned morphological differential extraction between template and inspection image |
+| | `onnx_detector.py` | ONNX Runtime accelerated bounding-box inference & feature extraction |
+| **`core.tools`** | `ipc_rules.py` | Ground-truth IPC-A-600 Class 2 / Class 3 dimensional and area thresholds |
+| | `batch_db.py` | SQLite telemetry store for batch recurrence tracking and line halt triggers |
+| **`core.agent`** | `schemas.py` | Strict Pydantic models for defect localization, telemetry, and triage decisions |
+| | `state_graph.py` | 4-Stage state graph orchestration with zero-token fast bypass |
+| | `guardrails.py` | Non-negotiable deterministic safety validator (fatal scrap overrides & emergency halts) |
+| **`api`** | `main.py` | High-throughput asynchronous FastAPI server hosting inspection & triage endpoints |
+| **`web`** | `index.html` | High-density Swiss-industrial machine vision UI console |
+
+</blockquote>
+</details>
+
 ---
 
-## Quickstart
+## 🚀 Getting Started
 
-### 1. Environment Setup
+### 📋 Prerequisites
+
+- **Python:** $\ge 3.10$
+- Virtual environment tool (`venv`, `uv`, or `conda`)
+
+### ⚙️ Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Tofui03/DeepPCB-AOI.git
+   cd DeepPCB-AOI
+   ```
+
+2. **Create and activate a virtual environment:**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt  # or: pip install fastapi uvicorn onnxruntime opencv-python pydantic pytest
+   ```
+
+### 💻 Usage & Web Console
+
+1. **Launch the FastAPI AOI Server:**
+   ```bash
+   uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+2. **Open the Machine Vision Console:**
+   - Open `web/index.html` directly in any modern browser, or navigate to:
+   - `http://localhost:8000/`
+
+3. **Interactive Inspection Flow:**
+   - Load Golden Template & Test Sample image pair.
+   - Run **Deterministic Stage 1** to get instant differential contours and ONNX bounding boxes in `< 4ms`.
+   - Run **Agent Triage** to inspect IPC-A-600 compliance and batch recurrence alerts.
+
+### 🧪 Testing
+
+Execute the comprehensive test harness:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Tofui03/DeepPCB-AOI.git
-cd DeepPCB-AOI
+# Run all 84 unit and integration tests
+pytest tests/ -v
 
-# Create and activate Python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 2. Run Test Suite
-
-Run all 84 unit, integration, and adversarial safety tests:
-
-```bash
-pytest -v
-```
-
-### 3. Launch Inspection Server & Web Console
-
-```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-- **Interactive Machine Vision Console:** [`http://localhost:8000`](http://localhost:8000)
-- **Interactive OpenAPI Documentation:** [`http://localhost:8000/docs`](http://localhost:8000/docs)
-
----
-
-## REST API Reference
-
-### Full Agentic Triage (`POST /api/agent-triage`)
-
-Inspects an indexed sample through the full 4-stage pipeline (Vision $\to$ Tools $\to$ Triage $\to$ Guardrails):
-
-```bash
-curl -X POST "http://localhost:8000/api/agent-triage" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sample_id": "12000001",
-    "ipc_class": "Class 3",
-    "batch_id": "BATCH-2026-A1"
-  }'
-```
-
-**Response (`200 OK`):**
-```json
-{
-  "board_id": "12000001",
-  "batch_id": "BATCH-2026-A1",
-  "ipc_class": "Class 3",
-  "disposition": "SCRAP",
-  "halt_production_line": false,
-  "guardrail_overridden": true,
-  "defects_detected": [
-    {
-      "defect_class": "Short",
-      "bbox": [182, 340, 204, 362],
-      "confidence": 0.985,
-      "severity": "CRITICAL",
-      "ipc_compliant": false,
-      "rule_violation": "IPC-A-600 §2.2.2: Bridging between conductors exceeds 0px limit"
-    }
-  ],
-  "stage_latencies_ms": {
-    "vision_stage_ms": 3.65,
-    "tools_stage_ms": 0.42,
-    "guardrails_stage_ms": 0.15,
-    "total_ms": 4.22
-  }
-}
-```
-
-### Batch Telemetry (`GET /api/batch-telemetry`)
-
-Query active line yield, defect occurrence frequencies, and line halt triggers:
-
-```bash
-curl -X GET "http://localhost:8000/api/batch-telemetry?batch_id=BATCH-2026-A1"
+# Run adversarial evaluation test suite
+pytest tests/test_agent_evals.py -v
 ```
 
 ---
 
-## Industrial Safety Standards
+## 📊 IPC-A-600 Compliance Matrix
 
-1. **Deterministic Override:** Regardless of LLM suggestions, any `Open` or `Short` defect automatically triggers a guardrail override to `SCRAP`.
-2. **Defect Clustering Protection:** If the same defect class appears $\ge 3$ times within an active batch, the pipeline triggers an emergency line halt flag (`halt_production_line: true`) to protect downstream Pick-and-Place (P&P) and reflow ovens.
+| Defect Class | Area / Dimension | Class 2 Disposition | Class 3 Disposition | Safety Guardrail Enforcement |
+| :--- | :---: | :---: | :---: | :---: |
+| `Open` | Any | **SCRAP** | **SCRAP** | Hard override: Never allows PASS |
+| `Short` | Any | **SCRAP** | **SCRAP** | Hard override: Never allows PASS |
+| `Mousebite` | $\le 10\%$ width reduction | **PASS** | **PASS** | Verified against line tolerance |
+| `Mousebite` | $10\% - 20\%$ reduction | **PASS** | **REWORK** | Class 3 tighter tolerance enforced |
+| `Spur` | $> 30\%$ clearance loss | **REWORK** | **REWORK** | Prevents dielectric breakdown |
+| `Any` | $\ge 3$ repeat in batch | **LINE HALT** | **LINE HALT** | Automated production stop |
 
 ---
 
-## License
+## 🤝 Contributing
 
-This project is licensed under the [MIT License](LICENSE).
+Contributions, bug reports, and pull requests are welcome:
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
+4. Ensure all tests pass (`pytest tests/`).
+5. Push to the branch (`git push origin feature/amazing-feature`) and open a Pull Request.
+
+---
+
+## 📜 License
+
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+<div align="right">
+
+[![Back to Top](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#top)
+
+</div>
