@@ -73,6 +73,13 @@ Built on the **"10% Model + 90% Deterministic Harness"** methodology:
 
 ## 🏛️ System Architecture
 
+<p align="center">
+  <img src="docs/architecture/system-architecture.svg" alt="DeepPCB-AOI System Architecture (Excalidraw)" width="100%"/>
+</p>
+<p align="center">
+  <em>Interactive Excalidraw vector source available at: <a href="docs/architecture/system-architecture.excalidraw"><code>docs/architecture/system-architecture.excalidraw</code></a></em>
+</p>
+
 ```mermaid
 flowchart TD
     In["Input Pair (Golden Template + Test Board)"] --> Stage1["Stage 1: ONNX Differential Detector\n< 4ms Preprocessing"]
