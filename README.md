@@ -80,21 +80,6 @@ Built on the **"10% Model + 90% Deterministic Harness"** methodology:
   <em>Interactive Excalidraw vector source available at: <a href="docs/architecture/system-architecture.excalidraw"><code>docs/architecture/system-architecture.excalidraw</code></a></em>
 </p>
 
-```mermaid
-flowchart TD
-    In["Input Pair (Golden Template + Test Board)"] --> Stage1["Stage 1: ONNX Differential Detector\n< 4ms Preprocessing"]
-    
-    Stage1 -->|"0 Defects Detected"| FastPass["Zero-Token Fast-Path Bypass\nDisposition: PASS (< 15ms)"]
-    Stage1 -->|">= 1 Defect Candidates"| Stage2["Stage 2: Deterministic Tools\n• IPC-A-600 Rule Verification\n• SQLite Batch Telemetry History"]
-    
-    Stage2 --> Stage3["Stage 3: Bounded Semantic Triage\nStructured Pydantic Schema\nMax Retries = 2 | Fallback Safe"]
-    
-    Stage3 --> Stage4["Stage 4: Python Safety Guardrails\n• Hard Override: Open / Short = NEVER PASS\n• Auto Line-Halt: Batch Count >= 3"]
-    
-    Stage4 --> OutReport["Final Inspection Report\nJSON Telemetry + Web Console HUD"]
-    Stage4 -->|Defect Recurrence >= 3| HaltLine["EMERGENCY LINE HALT\nSignal SMT Dispenser / P&P Stop"]
-```
-
 ---
 
 ## 📁 Project Structure
