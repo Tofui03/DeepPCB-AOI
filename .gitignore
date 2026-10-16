@@ -1,0 +1,36 @@
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Testing & Caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Agent & Local IDE Artifacts
+.agents/
+.impeccable.md
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Heavy Datasets & Databases (Keep repo lightweight under GitHub 100MB limit)
+data/DeepPCB/
+*.db
+*.sqlite3
+*.log
+
+# OS Generated
+.DS_Store
+Thumbs.db
