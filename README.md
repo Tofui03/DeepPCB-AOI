@@ -8,7 +8,6 @@
 
 <!-- BADGES -->
 <p align="center">
-  <img src="https://img.shields.io/github/license/Tofui03/DeepPCB-AOI?style=flat-square&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
   <img src="https://img.shields.io/github/last-commit/Tofui03/DeepPCB-AOI?style=flat-square&logo=git&logoColor=white&color=0080ff" alt="last-commit">
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat-square&logo=FastAPI&logoColor=white" alt="FastAPI">
@@ -36,8 +35,6 @@
     - [💻 Usage & Web Console](#-usage--web-console)
     - [🧪 Testing](#-testing)
 - [📊 IPC-A-600 Compliance Matrix](#-ipc-a-600-compliance-matrix)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
 
 ---
 
@@ -201,21 +198,6 @@ pytest tests/test_agent_evals.py -v
 | `Any` | $\ge 3$ repeat in batch | **LINE HALT** | **LINE HALT** | Automated production stop |
 
 ---
-
-## 🤝 Contributing
-
-Contributions, bug reports, and pull requests are welcome:
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
-4. Ensure all tests pass (`pytest tests/`).
-5. Push to the branch (`git push origin feature/amazing-feature`) and open a Pull Request.
-
----
-
-## 📜 License
-
-Distributed under the **MIT License**. See `LICENSE` for details.
 
 <div align="right">
 
