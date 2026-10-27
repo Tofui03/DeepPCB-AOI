@@ -119,7 +119,7 @@ class TestAdversarialAgentGraphEvals:
     """End-to-end adversarial evaluations for the 4-stage `PCBAOIAgentGraph`."""
 
     def test_eval1_fast_path_bypass_zero_tool_and_vlm_calls(self) -> None:
-        """Eval 1 (Rule 2): Identical boards must exit at Stage 1 with 0 tool/VLM invocations."""
+        """Identical boards stop after detection: no batch writes and no VLM calls."""
         vlm_call_count = 0
 
         def spy_vlm(context: dict[str, Any], roi: np.ndarray) -> dict[str, Any]:
@@ -149,7 +149,7 @@ class TestAdversarialAgentGraphEvals:
         store.close()
 
     def test_eval2_adversarial_hallucination_overridden_by_stage4(self) -> None:
-        """Eval 2 (Rule 5): Rogue VLM returning PASS/LOW on a Short defect is overridden to SCRAP/CRITICAL."""
+        """A VLM that returns PASS / LOW on a Short is overridden to SCRAP / CRITICAL."""
         template_img, test_img = _make_single_short_board_pair()
 
         def rogue_vlm(context: dict[str, Any], roi: np.ndarray) -> str:
@@ -185,7 +185,7 @@ class TestAdversarialAgentGraphEvals:
         store.close()
 
     def test_eval3_flaky_vlm_retry_recovery_on_attempt_2(self) -> None:
-        """Eval 3 (Rule 4): Flaky VLM returning invalid JSON on attempt 1 recovers on attempt 2 without fallback."""
+        """Invalid JSON on the first VLM call is retried; a valid second call is kept."""
         template_img, test_img = _make_single_short_board_pair()
         attempts = 0
 
@@ -225,7 +225,7 @@ class TestAdversarialAgentGraphEvals:
         store.close()
 
     def test_eval4_exhausted_retries_caps_at_max_retries_and_uses_fallback(self) -> None:
-        """Eval 4 (Rule 4): Broken VLM is capped at 1 + MAX_VLM_RETRIES (3 total calls) and falls back cleanly."""
+        """A VLM that never returns valid JSON stops after 1 + MAX_VLM_RETRIES calls and uses the rule fallback."""
         template_img, test_img = _make_single_short_board_pair()
         call_count = 0
 
@@ -255,7 +255,7 @@ class TestAdversarialAgentGraphEvals:
         store.close()
 
     def test_eval5_batch_drift_line_halt_on_third_consecutive_board(self) -> None:
-        """Eval 5 (Rule 5): 3 consecutive boards with the same defect class in one batch force halt_production_line=True."""
+        """The third board with the same defect class in one batch sets halt_production_line."""
         template_img, test_img = _make_single_short_board_pair()
 
         # Use a mock VLM that always stubbornly outputs halt_production_line=False

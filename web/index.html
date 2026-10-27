@@ -6,7 +6,6 @@
   <title>DeepPCB-AOI | Industrial PCB Defect Discovery &amp; IPC Triage Console</title>
   <style>
     :root {
-      /* Instrumental-inspired Professional Light Palette */
       --bg-page: #f0f2f5;
       --bg-card: #ffffff;
       --bg-subtle: #f8fafc;
@@ -15,12 +14,10 @@
       --border-subtle: #e5e7eb;
       --border-dark: #1f2937;
 
-      /* Ink & Typography */
       --text-main: #111827;
       --text-muted: #4b5563;
       --text-light: #6b7280;
 
-      /* Industrial Accents & Status Colors (Instrumental style) */
       --brand-dark: #111827;
       --brand-purple: #6d28d9;
       --brand-purple-light: #f5f3ff;
@@ -49,7 +46,6 @@
       flex-direction: column;
     }
 
-    /* 1. TOP GLOBAL NAVIGATION (Instrumental style) */
     .top-navbar {
       background: var(--brand-dark);
       color: #ffffff;
@@ -114,7 +110,6 @@
     }
     .nav-item:hover { color: #ffffff; }
 
-    /* 2. SUB-HEADER / FILTER BAR */
     .filter-bar {
       background: #ffffff;
       border-bottom: 1px solid var(--border-subtle);
@@ -171,7 +166,6 @@
     }
     .btn-outline:hover { background: var(--bg-subtle); }
 
-    /* 3. MAIN WORKSPACE WITH CLEAN PARTITIONS */
     .workspace {
       flex: 1;
       max-width: 1560px;
@@ -183,7 +177,6 @@
       gap: 1.25rem;
     }
 
-    /* PARTITION 1: TOP DISCOVERY & INSPECTION CARD */
     .panel-card {
       background: var(--bg-card);
       border: 1px solid var(--border-main);
@@ -221,7 +214,6 @@
     .badge-green { background: var(--status-pass-bg); color: var(--status-pass); border: 1px solid #a7f3d0; }
     .badge-red { background: var(--status-scrap-bg); color: var(--status-scrap); border: 1px solid #fecaca; }
 
-    /* Zone Layout Grid */
     .zone-grid {
       display: grid;
       grid-template-columns: 340px 1fr;
@@ -231,7 +223,6 @@
       .zone-grid { grid-template-columns: 1fr; }
     }
 
-    /* Left Control Sidebar in Zone 1 */
     .zone-sidebar {
       border-right: 1px solid var(--border-subtle);
       padding: 1.25rem;
@@ -303,7 +294,6 @@
       line-height: 1.35;
     }
 
-    /* Right Inspection Stage in Zone 1 */
     .zone-stage {
       padding: 1.25rem;
       background: #ffffff;
@@ -350,7 +340,6 @@
     }
     .btn-action-primary:hover { background: #1d4ed8; }
 
-    /* Dual / Triple PCB Viewport Carousel (Instrumental style cards) */
     .viewport-deck {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -405,7 +394,6 @@
       border-top: 1px solid var(--border-subtle);
     }
 
-    /* PARTITION 2: DEFECT DRILLDOWN GALLERY (Like Instrumental bottom section) */
     .drilldown-header {
       padding: 0.75rem 1.25rem;
       border-bottom: 1px solid var(--border-subtle);
@@ -439,7 +427,6 @@
       font-weight: 600;
     }
 
-    /* Units Row (Instrumental Thumbnail Cards) */
     .units-row {
       padding: 1.25rem;
       display: grid;
@@ -508,7 +495,6 @@
       font-family: var(--font-mono);
     }
 
-    /* PARTITION 3: 4-STAGE AGENT TRACE TIMELINE */
     .trace-section {
       padding: 1.25rem;
       background: #ffffff;
@@ -558,7 +544,6 @@
       font-size: 0.78rem;
     }
 
-    /* HAZARD BANNER (LINE HALT) */
     .halt-banner {
       display: none;
       background: #fee2e2;
@@ -577,7 +562,6 @@
 </head>
 <body>
 
-  <!-- 1. TOP GLOBAL NAVIGATION -->
   <nav class="top-navbar">
     <div class="nav-brand">
       <div class="brand-logo">
@@ -598,7 +582,6 @@
     </div>
   </nav>
 
-  <!-- 2. FILTER & METRIC BAR -->
   <div class="filter-bar">
     <div class="filter-left">
       <div class="date-badge">
@@ -617,10 +600,8 @@
     </div>
   </div>
 
-  <!-- 3. MAIN WORKSPACE WITH CLEAR PARTITIONS -->
   <main class="workspace">
 
-    <!-- HAZARD INTERLOCK BANNER -->
     <div class="halt-banner" id="haltBanner">
       <div>
         <span>🚨 PRODUCTION LINE HALTED</span>
@@ -629,13 +610,12 @@
       <button class="btn-outline" style="background:#ffffff; color:#991b1b; border-color:#f87171;" id="btnDismissHalt">Release Interlock</button>
     </div>
 
-    <!-- PARTITION 1: ANOMALY DISCOVERY & INSPECTION VIEWER -->
     <section class="panel-card">
       <div class="panel-header">
         <div class="panel-title-group">
           <h2 class="panel-title">Discover new anomalies</h2>
           <span class="badge-pill badge-purple" id="reviewCountBadge">1,500 PCB pairs ready</span>
-          <span class="badge-pill badge-green" id="latencyBadge">ONNX: ~3.7 ms (263 FPS)</span>
+          <span class="badge-pill badge-green" id="latencyBadge">ONNX: pending</span>
         </div>
         <div class="sample-picker">
           <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Sample:</span>
@@ -651,7 +631,6 @@
       </div>
 
       <div class="zone-grid">
-        <!-- Left: Filters & Batch Progress -->
         <div class="zone-sidebar">
           <div class="filter-group">
             <span class="group-label">Inspection Triage Status</span>
@@ -686,12 +665,11 @@
               <div class="progress-fill" id="batchProgressBar" style="width: 10%;"></div>
             </div>
             <p class="progress-desc">
-              Automatic zero-token bypass active. Normal boards pass in &lt;15ms without cloud LLM charges.
+              Boards with no detections return PASS without a model call.
             </p>
           </div>
         </div>
 
-        <!-- Right: Dual-Pane Viewport Carousel -->
         <div class="zone-stage">
           <div class="stage-action-bar">
             <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);" id="sampleLabelDisplay">
@@ -703,7 +681,6 @@
           </div>
 
           <div class="viewport-deck">
-            <!-- Viewport A: Template -->
             <div class="pcb-view-box">
               <div class="pcb-view-header">
                 <span>01. Golden Reference Template</span>
@@ -715,7 +692,6 @@
               <div class="pcb-view-footer">Defect-free baseline CAD/Gerber render</div>
             </div>
 
-            <!-- Viewport B: Tested Sample -->
             <div class="pcb-view-box">
               <div class="pcb-view-header">
                 <span>02. Tested PCB + BBox Overlays</span>
@@ -728,7 +704,6 @@
               <div class="pcb-view-footer">Hardware SMT capture on inspection line</div>
             </div>
 
-            <!-- Viewport C: Differential Heatmap -->
             <div class="pcb-view-box">
               <div class="pcb-view-header">
                 <span>03. Aligned Differential Map</span>
@@ -744,7 +719,6 @@
       </div>
     </section>
 
-    <!-- PARTITION 2: DETECTED REGIONS DRILLDOWN (Instrumental "Region 353" Style) -->
     <section class="panel-card">
       <div class="drilldown-header">
         <div class="region-meta">
@@ -755,22 +729,18 @@
       </div>
 
       <div class="anomaly-ranking-bar">
-        <span>⚠️ Instrumental AI ranking: Sorted most anomalous to nominal</span>
+        <span>Detections in detector order</span>
         <span style="margin-left: auto; font-family: var(--font-mono); font-size: 0.75rem;" id="guardrailStatusSummary">Stage 4 Guardrails: Armed</span>
       </div>
 
-      <!-- Horizontal Unit Cards Gallery -->
       <div class="units-row" id="unitsGallery">
-        <!-- Rendered dynamically via JS -->
       </div>
     </section>
 
-    <!-- PARTITION 3: 4-STAGE STATE GRAPH TRACE -->
     <section class="panel-card">
       <div class="panel-header">
         <h3 style="font-size: 0.95rem; font-weight: 700;">4-Stage Agent Execution Trace (Auditable Line Ledger)</h3>
-        <span style="font-size: 0.75rem; color: var(--text-light); font-family: var(--font-mono);">Google New SDLC • 10% Model + 90% Harness</span>
-      </div>
+              </div>
       <div class="trace-section">
         <div class="trace-timeline" id="traceTimeline">
           <div class="trace-step">
@@ -857,8 +827,12 @@
       document.getElementById('templateImg').src = data.template_b64;
       document.getElementById('testImg').src = data.test_b64;
       document.getElementById('diffImg').src = data.diff_b64;
-      document.getElementById('latencyBadge').textContent = `ONNX: ${data.stage1_latency_ms.toFixed(2)} ms`;
-      renderBoundingBoxes(data.detections || []);
+      const report = data.report || {};
+      const latency = data.stage1_latency_ms != null ? data.stage1_latency_ms : report.stage1_latency_ms;
+      if (typeof latency === 'number') {
+        document.getElementById('latencyBadge').textContent = `ONNX: ${latency.toFixed(2)} ms`;
+      }
+      renderBoundingBoxes(data.detections || report.detections || []);
     }
 
     function renderBoundingBoxes(detections) {
@@ -893,7 +867,6 @@
       const report = data.report;
       renderInspectionData(data);
 
-      // Handle Line Halt Banner
       const haltBanner = document.getElementById('haltBanner');
       if (data.line_halted) {
         haltBanner.classList.add('active');
@@ -901,7 +874,6 @@
         haltBanner.classList.remove('active');
       }
 
-      // Update Overall Disposition Badge
       const dispBadge = document.getElementById('overallDispositionBadge');
       dispBadge.textContent = `DISPOSITION: ${data.board_disposition}`;
       dispBadge.className = 'badge-pill ' + (
@@ -909,11 +881,9 @@
         data.board_disposition === 'REWORK' ? 'badge-purple' : 'badge-red'
       );
 
-      // Render Instrumental-Style Unit Cards
       const gallery = document.getElementById('unitsGallery');
       gallery.innerHTML = '';
 
-      // Card 0: Normal Reference Unit
       const normalCard = document.createElement('div');
       normalCard.className = 'unit-card';
       normalCard.innerHTML = `
@@ -931,7 +901,6 @@
       `;
       gallery.appendChild(normalCard);
 
-      // Cards 1..N: Detected Defect Units
       (report.decisions || []).forEach((dec, idx) => {
         const box = report.detections[idx] || {};
         const isOverride = dec.guardrail_overridden;
@@ -959,7 +928,6 @@
 
       document.getElementById('labeledUnitsSummary').textContent = `Detected Units: ${report.decisions ? report.decisions.length : 0}`;
 
-      // Render Trace Timeline
       renderTraceTimeline(data.trace || []);
     }
 
@@ -980,7 +948,6 @@
       });
     }
 
-    // Event Listeners
     document.getElementById('sampleSelect').addEventListener('change', (e) => {
       currentSampleId = e.target.value;
       document.getElementById('sampleLabelDisplay').textContent = `Sample: ${currentSampleId}`;
@@ -1009,10 +976,20 @@
     document.getElementById('btnBenchmark').addEventListener('click', async () => {
       const res = await fetch('/api/benchmark');
       const data = await res.json();
-      alert(`ONNX Runtime Benchmark:\nMedian: ${data.latency_benchmarks.p50_ms.toFixed(2)} ms\nFPS: ${data.latency_benchmarks.fps.toFixed(1)}\nProvider: ${data.latency_benchmarks.execution_provider}`);
+      const bench = data.onnx_benchmark;
+      if (!bench) {
+        alert('Benchmark response did not include onnx_benchmark.');
+        return;
+      }
+      alert(
+        'ONNX Runtime benchmark\n' +
+        'Median: ' + Number(bench.p50_ms).toFixed(2) + ' ms\n' +
+        'Mean: ' + Number(bench.mean_ms).toFixed(2) + ' ms\n' +
+        'FPS: ' + Number(bench.fps).toFixed(1) + '\n' +
+        'Provider: ' + bench.execution_provider
+      );
     });
 
-    // Initial Load
     loadSamples();
   </script>
 </body>

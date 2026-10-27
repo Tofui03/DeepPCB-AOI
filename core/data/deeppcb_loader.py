@@ -1,11 +1,11 @@
-"""DeepPCB dataset loader, annotation parser, and zero-leakage SHA-256 split verifier.
+"""DeepPCB loader, annotation parser, and train/test overlap check.
 
-Dataset structure (`/home/tofui/project/pcb/data/DeepPCB/PCBData`):
-- `trainval.txt` (1,000 image/annotation entries)
-- `test.txt` (500 image/annotation entries)
-- Each manifest line: `<group>/<sub_dir>/<id>.jpg <group>/<sub_dir>_not/<id>.txt`
-- Actual image files on disk: `<id>_temp.jpg` (golden template) and `<id>_test.jpg` (tested PCB)
-- Each annotation line: `x1 y1 x2 y2 class_id` where `class_id` is in `{1..6}`.
+Expected layout is ``data/DeepPCB/PCBData`` (not committed; see README):
+
+- ``trainval.txt`` (1,000 entries) and ``test.txt`` (500 entries)
+- Manifest line: ``<group>/<sub_dir>/<id>.jpg <group>/<sub_dir>_not/<id>.txt``
+- Images on disk: ``<id>_temp.jpg`` and ``<id>_test.jpg``
+- Annotation line: ``x1 y1 x2 y2 class_id`` with ``class_id`` in 1..6
 """
 
 from __future__ import annotations
@@ -20,7 +20,9 @@ import numpy as np
 
 from core.agent.schemas import BoundingBoxDetection, DefectClass
 
-DEFAULT_DEEPPCB_ROOT = Path("/home/tofui/project/pcb/data/DeepPCB/PCBData")
+DEFAULT_DEEPPCB_ROOT = (
+    Path(__file__).resolve().parents[2] / "data" / "DeepPCB" / "PCBData"
+)
 
 DEEPPCB_CLASS_MAP: dict[int, DefectClass] = {
     1: "Open",

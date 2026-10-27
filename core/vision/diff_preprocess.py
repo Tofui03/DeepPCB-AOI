@@ -49,15 +49,12 @@ def compute_differential_map(
     template_img: np.ndarray,
     test_img: np.ndarray,
 ) -> np.ndarray:
-    """Compute aligned 640x640 normalized absolute differential map with morphological cleanup.
+    """Absolute difference of two 640×640 images, cleaned up and scaled to 0–255.
 
-    Steps:
-    1. Validate 640x640 spatial dimensions and convert BGR inputs to 8-bit grayscale.
-    2. Compute pixel-wise absolute difference `|template - test|`.
-    3. Apply 3x3 morphological opening (`MORPH_OPEN`) to suppress single-pixel alignment/sensor noise,
-       followed by 3x3 morphological closing (`MORPH_CLOSE`) to consolidate contiguous copper defects.
-    4. Normalize non-zero differential responses across `[0, 255]` (`uint8`). Identical boards
-       remain strictly all-zero (`0`).
+    Inputs are checked for size and converted to 8-bit grayscale. A 3×3 opening
+    drops isolated pixels; a 3×3 closing joins neighbors. If opening removes the
+    only signal, the raw difference is kept. Identical boards stay all zeros
+    and are not rescaled.
     """
     template_gray = ensure_grayscale_640(template_img, name="template_img")
     test_gray = ensure_grayscale_640(test_img, name="test_img")

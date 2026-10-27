@@ -63,13 +63,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "DeepPCB-AOI System Architecture\n\nIndustrial Edge AOI & IPC-A-600 Agentic Compliance Harness",
+      "text": "DeepPCB-AOI System Architecture\n\nBare-board AOI, rule checks, and safety overrides",
       "fontSize": 20,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "banner-title",
-      "originalText": "DeepPCB-AOI System Architecture\n\nIndustrial Edge AOI & IPC-A-600 Agentic Compliance Harness",
+      "originalText": "DeepPCB-AOI System Architecture\n\nBare-board AOI, rule checks, and safety overrides",
       "lineHeight": 1.25
     },
     {
@@ -132,13 +132,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "Stage 1: ONNX Vision Detector\n\n\u2022 Aligned Differential Morphological Preprocess\n\u2022 Deterministic Bounding Box Localization\n\u2022 Ultra-low Latency: < 4ms (263 FPS)",
+      "text": "Stage 1: ONNX Vision Detector\n\n\u2022 Aligned Differential Morphological Preprocess\n\u2022 Deterministic Bounding Box Localization\n\u2022 Latency budget: mean under 15 ms",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "stage1-card",
-      "originalText": "Stage 1: ONNX Vision Detector\n\n\u2022 Aligned Differential Morphological Preprocess\n\u2022 Deterministic Bounding Box Localization\n\u2022 Ultra-low Latency: < 4ms (263 FPS)",
+      "originalText": "Stage 1: ONNX Vision Detector\n\n\u2022 Aligned Differential Morphological Preprocess\n\u2022 Deterministic Bounding Box Localization\n\u2022 Latency budget: mean under 15 ms",
       "lineHeight": 1.25
     },
     {
@@ -408,13 +408,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "Input Inspection Pair\n\n\u2022 Golden Reference Board Template\n\u2022 Production Unit Under Test (UUT)\n\u2022 512 x 512 Optical Alignment",
+      "text": "Input Inspection Pair\n\n\u2022 Golden Reference Board Template\n\u2022 Production Unit Under Test (UUT)\n\u2022 640 x 640 Optical Alignment",
       "fontSize": 15,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "input-source-card",
-      "originalText": "Input Inspection Pair\n\n\u2022 Golden Reference Board Template\n\u2022 Production Unit Under Test (UUT)\n\u2022 512 x 512 Optical Alignment",
+      "originalText": "Input Inspection Pair\n\n\u2022 Golden Reference Board Template\n\u2022 Production Unit Under Test (UUT)\n\u2022 640 x 640 Optical Alignment",
       "lineHeight": 1.25
     },
     {

@@ -1,10 +1,7 @@
-"""Stage 1 deterministic ONNX Runtime edge detector, NMS post-processor, and Fast-Path gate.
+"""ONNX Runtime difference detector and non-maximum suppression.
 
-Architectural Rules Enforced:
-- Rule 1: All spatial coordinates (x1, y1, x2, y2), confidence scores, and pixel areas
-  are produced deterministically by the ONNX Runtime vision layer.
-- Rule 2: Zero-token fast-path bypass returns `disposition = "PASS"` (`fast_path_pass=True`)
-  in `<15ms` when 0 defects are detected.
+Coordinates, confidence, and area are computed here. Identical images, or a score
+map below ``score_threshold``, return no boxes.
 """
 
 from __future__ import annotations
@@ -36,9 +33,7 @@ _STRIDE: int = 4
 _GRID_DIM: int = BOARD_DIM_PX // _STRIDE
 
 
-# ---------------------------------------------------------------------------
-# Minimal Pure-Python ONNX ModelProto Wire Builder (IR v8, Opset 13)
-# ---------------------------------------------------------------------------
+# ONNX ModelProto field numbers (IR v8, opset 13). See the ONNX protobuf schema.
 def _encode_varint(value: int) -> bytes:
     out = bytearray()
     while value > 0x7F:
@@ -159,9 +154,6 @@ def build_differential_onnx_model(
     return target_path
 
 
-# ---------------------------------------------------------------------------
-# Non-Maximum Suppression (NMS)
-# ---------------------------------------------------------------------------
 def compute_iou(box_a: BoundingBoxDetection, box_b: BoundingBoxDetection) -> float:
     """Compute exact Intersection-over-Union (IoU) between two `BoundingBoxDetection` boxes."""
     inter_x1 = max(box_a.x1, box_b.x1)
@@ -208,11 +200,8 @@ def apply_nms(
     return kept
 
 
-# ---------------------------------------------------------------------------
-# Stage 1 ONNX Runtime Detector
-# ---------------------------------------------------------------------------
 class ONNXPCBDetector:
-    """High-throughput Stage 1 PCB defect detector powered by ONNX Runtime."""
+    """PCB defect detector backed by the checked-in difference graph."""
 
     def __init__(
         self,
@@ -387,7 +376,7 @@ class ONNXPCBDetector:
         template_img: np.ndarray,
         test_img: np.ndarray,
     ) -> BoardInspectionReport:
-        """Execute Stage 1 inspection and enforce Rule 2 Zero-Token Fast-Path Bypass."""
+        """Run detection and set ``fast_path_pass`` when there are no boxes."""
         detections, latency_ms = self.detect(template_img, test_img)
         is_fast_path = len(detections) == 0
         return BoardInspectionReport(
