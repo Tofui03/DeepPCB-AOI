@@ -4,6 +4,8 @@ Bare-board optical inspection for the six defect classes in the [DeepPCB](https:
 
 The checked-in ONNX file is a fixed difference graph, and the class label is a geometry heuristic. There is no trained checkpoint and no accuracy table in this repo. Tests check that Stage 1 stays under 15 ms. That budget is not a measured frames-per-second claim.
 
+![Template, test image with detector boxes, and the difference map for one DeepPCB pair.](docs/inspect-loop.gif)
+
 ## Defect classes
 
 | Class | What it is on the copper |
