@@ -35,7 +35,7 @@ CLASS_MAP: dict[int, DefectClass] = {
 
 def apply_class_aware_nms(
     boxes: list[BoundingBoxDetection],
-    iou_threshold: float = 0.45,
+    iou_threshold: float = 0.70,
 ) -> list[BoundingBoxDetection]:
     """Apply NMS independently per defect class, matching YOLO standard evaluation."""
     if not boxes:
@@ -46,7 +46,11 @@ def apply_class_aware_nms(
         by_class.setdefault(b.defect_class, []).append(b)
     for cls_boxes in by_class.values():
         kept.extend(apply_nms(cls_boxes, iou_threshold=iou_threshold))
-    return kept
+    return sorted(
+        kept,
+        key=lambda b: (b.confidence, b.area_px, -b.x1, -b.y1),
+        reverse=True,
+    )
 
 
 class YOLOv8PCBDetector:
@@ -56,7 +60,8 @@ class YOLOv8PCBDetector:
         self,
         model_path: str | Path = DEFAULT_YOLO_ONNX_PATH,
         conf_threshold: float = 0.25,
-        iou_threshold: float = 0.45,
+        iou_threshold: float = 0.70,
+        class_agnostic: bool = False,
     ) -> None:
         self.model_path = Path(model_path)
         if not self.model_path.is_file():
@@ -67,6 +72,7 @@ class YOLOv8PCBDetector:
 
         self.conf_threshold = conf_threshold
         self.iou_threshold = iou_threshold
+        self.class_agnostic = class_agnostic
 
         sess_options = ort.SessionOptions()
         sess_options.intra_op_num_threads = 2
@@ -163,7 +169,10 @@ class YOLOv8PCBDetector:
                     )
                 )
 
-        filtered = apply_class_aware_nms(candidates, iou_threshold=self.iou_threshold)
+        if self.class_agnostic:
+            filtered = apply_nms(candidates, iou_threshold=self.iou_threshold)
+        else:
+            filtered = apply_class_aware_nms(candidates, iou_threshold=self.iou_threshold)
         latency_ms = round((time.perf_counter() - t_start) * 1000.0, 4)
         return filtered, latency_ms
 

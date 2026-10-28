@@ -334,11 +334,26 @@ def make_yolo_detector(weights_path: Path, mode: str = "b", conf: float = 0.25):
     return _infer
 
 
+def make_yolo_onnx_detector(onnx_path: Path, conf: float = 0.25, iou_thresh: float = 0.70):
+    """Directly evaluate the production YOLOv8PCBDetector ONNX Runtime implementation."""
+    from core.vision.yolo_detector import YOLOv8PCBDetector
+
+    detector = YOLOv8PCBDetector(model_path=onnx_path, conf_threshold=conf, iou_threshold=iou_thresh)
+
+    def _infer(temp_img: np.ndarray, test_img: np.ndarray) -> list[Box]:
+        detections, _ = detector.detect(temp_img, test_img)
+        return [Box(d.x1, d.y1, d.x2, d.y2, d.defect_class, d.confidence) for d in detections]
+
+    return _infer
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluate DeepPCB Defect Detectors")
     parser.add_argument("--method", choices=["a", "b", "c", "all"], default="a", help="Method to evaluate")
     parser.add_argument("--weights-b", type=Path, default=None, help="Weights path for YOLO Exp B")
     parser.add_argument("--weights-c", type=Path, default=None, help="Weights path for YOLO Exp C")
+    parser.add_argument("--onnx-c", type=Path, default=None, help="Path to production YOLOv8 3-channel ONNX model")
+    parser.add_argument("--iou-thresh", type=float, default=0.70, help="NMS IoU threshold for YOLO (default: 0.70)")
     parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold for YOLO")
     parser.add_argument("--pcb-root", type=Path, default=Path("data/DeepPCB/PCBData"))
     parser.add_argument("--output-json", type=Path, default=Path("evaluation_results.json"))
@@ -366,14 +381,23 @@ def main():
         res_b = run_evaluation(fn_b, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
         all_results["Method_B_YOLOv8n_SingleImage"] = res_b
 
-    if args.method in ["c", "all"] and args.weights_c:
-        print("\n" + "=" * 50)
-        print(f"Evaluating Method C (YOLOv8n 3-Channel Composite: {args.weights_c})...")
-        print("=" * 50)
-        fn_c = make_yolo_detector(args.weights_c, mode="c", conf=args.conf)
-        bad_dir = args.bad_cases_dir / "method_c"
-        res_c = run_evaluation(fn_c, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
-        all_results["Method_C_YOLOv8n_3Channel"] = res_c
+    if args.method in ["c", "all"]:
+        if args.onnx_c:
+            print("\n" + "=" * 50)
+            print(f"Evaluating Method C (Production YOLOv8PCBDetector ONNX: {args.onnx_c})...")
+            print("=" * 50)
+            fn_c = make_yolo_onnx_detector(args.onnx_c, conf=args.conf, iou_thresh=args.iou_thresh)
+            bad_dir = args.bad_cases_dir / "method_c"
+            res_c = run_evaluation(fn_c, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
+            all_results["Method_C_YOLOv8n_3Channel_ONNX"] = res_c
+        elif args.weights_c:
+            print("\n" + "=" * 50)
+            print(f"Evaluating Method C (YOLOv8n 3-Channel Composite: {args.weights_c})...")
+            print("=" * 50)
+            fn_c = make_yolo_detector(args.weights_c, mode="c", conf=args.conf)
+            bad_dir = args.bad_cases_dir / "method_c"
+            res_c = run_evaluation(fn_c, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
+            all_results["Method_C_YOLOv8n_3Channel"] = res_c
 
     # Save summary json
     args.output_json.write_text(json.dumps(all_results, indent=2), encoding="utf-8")
