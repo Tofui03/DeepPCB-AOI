@@ -23,12 +23,9 @@ from core.agent.schemas import BoundingBoxDetection, DefectClass
 REAL_DEEPPCB_ROOT = (
     Path(__file__).resolve().parents[2] / "data" / "DeepPCB" / "PCBData"
 )
-MOCK_DEEPPCB_ROOT = (
-    Path(__file__).resolve().parent / "mock_pcb"
-)
-DEFAULT_DEEPPCB_ROOT = (
-    REAL_DEEPPCB_ROOT if REAL_DEEPPCB_ROOT.is_dir() else MOCK_DEEPPCB_ROOT
-)
+MOCK_DEEPPCB_ROOT = Path(__file__).resolve().parent / "mock_pcb"
+# Real corpus only. The mock tree is opt-in for tests (`allow_mock=True`).
+DEFAULT_DEEPPCB_ROOT = REAL_DEEPPCB_ROOT
 
 DEEPPCB_CLASS_MAP: dict[int, DefectClass] = {
     1: "Open",
@@ -106,18 +103,28 @@ def parse_annotation_file(txt_path: str | Path) -> list[BoundingBoxDetection]:
 class DeepPCBDataset:
     """Deterministic loader and zero-leakage auditor for the DeepPCB dataset."""
 
-    def __init__(self, data_root: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        data_root: str | Path | None = None,
+        *,
+        allow_mock: bool = False,
+    ) -> None:
         if data_root is not None:
             self.data_root = Path(data_root)
             if not self.data_root.is_dir():
-                if self.data_root.resolve() == REAL_DEEPPCB_ROOT.resolve() and MOCK_DEEPPCB_ROOT.is_dir():
-                    self.data_root = MOCK_DEEPPCB_ROOT
-                else:
-                    raise FileNotFoundError(f"DeepPCB dataset root not found: {self.data_root}")
+                raise FileNotFoundError(
+                    f"DeepPCB dataset root not found: {self.data_root}"
+                )
+        elif REAL_DEEPPCB_ROOT.is_dir():
+            self.data_root = REAL_DEEPPCB_ROOT
+        elif allow_mock and MOCK_DEEPPCB_ROOT.is_dir():
+            self.data_root = MOCK_DEEPPCB_ROOT
         else:
-            self.data_root = DEFAULT_DEEPPCB_ROOT
+            raise FileNotFoundError(
+                f"DeepPCB dataset root not found: {REAL_DEEPPCB_ROOT}"
+            )
 
-        self.is_mock: bool = (self.data_root == MOCK_DEEPPCB_ROOT)
+        self.is_mock: bool = self.data_root.resolve() == MOCK_DEEPPCB_ROOT.resolve()
         self.trainval_manifest = self.data_root / "trainval.txt"
         self.test_manifest = self.data_root / "test.txt"
 

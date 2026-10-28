@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.main import app  # noqa: E402
+from api.main import app, dataset  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -40,13 +40,15 @@ def test_list_curated_samples_and_filtering(client: TestClient) -> None:
     data = res.json()
     assert "samples" in data
     assert "groups" in data
-    if data["total_available"] >= 1000:
-        assert len(data["groups"]) >= 10
-        assert len(data["samples"]) >= 10
+    if dataset.is_mock:
+        assert data["groups"] == ["group20085"]
+        assert data["total_available"] == 2
+        assert len(data["samples"]) == 1
+        assert data["samples"][0]["sample_id"] == "20085000"
     else:
-        assert len(data["groups"]) >= 1
-        assert len(data["samples"]) >= 1
-        assert data["total_available"] >= 1
+        assert len(data["groups"]) >= 10
+        assert data["total_available"] >= 1000
+        assert len(data["samples"]) >= 10
     first = data["samples"][0]
     assert "sample_id" in first
     assert "group" in first
@@ -64,6 +66,7 @@ def test_list_curated_samples_and_filtering(client: TestClient) -> None:
     res_defect = client.get("/api/samples?defect_class=Short&limit=30")
     assert res_defect.status_code == 200
     defect_data = res_defect.json()
+    assert defect_data["samples"]
     assert all("Short" in s["defect_classes"] for s in defect_data["samples"])
 
 
@@ -236,9 +239,10 @@ def test_benchmark_endpoint(client: TestClient) -> None:
     assert data["sla_met"] is True
     assert float(data["onnx_benchmark"]["mean_ms"]) < 15.0
     assert data["dataset_audit"]["zero_leakage"] is True
-    if not data["dataset_audit"].get("is_mock"):
+    assert data["dataset_audit"]["is_mock"] is dataset.is_mock
+    if dataset.is_mock:
+        assert data["dataset_audit"]["trainval_count"] == 1
+        assert data["dataset_audit"]["test_count"] == 1
+    else:
         assert data["dataset_audit"]["trainval_count"] == 1000
         assert data["dataset_audit"]["test_count"] == 500
-    else:
-        assert data["dataset_audit"]["trainval_count"] >= 1
-        assert data["dataset_audit"]["test_count"] >= 1

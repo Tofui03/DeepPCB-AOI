@@ -43,7 +43,7 @@
     <text x="0" y="24" fill="#94a3b8" font-size="13" font-weight="500">Hybrid 4-Stage Optical Inspection Pipeline: Deterministic ONNX Difference Engine &amp; Guardrailed Semantic Triage</text>
     <rect x="920" y="-18" width="240" height="36" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
     <circle cx="938" cy="0" r="5" fill="#10b981"/>
-    <text x="952" y="5" fill="#cbd5e1" font-size="12" font-weight="600">IPC-A-600 / 610 READY</text>
+    <text x="952" y="5" fill="#cbd5e1" font-size="12" font-weight="600">IPC-A-600 CLASS 2 / 3</text>
   </g>
 
   <!-- ==================== STAGE 0: INPUTS ==================== -->
@@ -84,38 +84,38 @@
     
     <!-- Metrics Pill -->
     <rect x="16" y="50" width="248" height="22" rx="4" fill="#0c4a6e"/>
-    <text x="140" y="65" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">SLA: &lt; 15.0ms (Measured: ~1.61ms · 620 FPS)</text>
+    <text x="140" y="65" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">SLA: mean under 15 ms (Stage 1 detect)</text>
 
     <!-- Inner Modules -->
     <g transform="translate(16, 85)">
       <!-- 1. Diff Graph -->
       <rect width="248" height="65" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
       <text x="14" y="22" fill="#f8fafc" font-size="12" font-weight="700">696-Byte Handcrafted ONNX Graph</text>
-      <text x="14" y="40" fill="#94a3b8" font-size="11">• Sub(Tpl, Tst) ➔ Abs() ➔ AvgPool4x4</text>
+      <text x="14" y="40" fill="#94a3b8" font-size="11">• Sub, Abs, then Conv 4×4 stride 4</text>
       <text x="14" y="54" fill="#94a3b8" font-size="11">• Zero-Dependency Protobuf Varint Synthesis</text>
 
       <!-- 2. Morphology Analysis -->
       <rect y="75" width="248" height="65" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
       <text x="14" y="97" fill="#f8fafc" font-size="12" font-weight="700">Morphological Polarity Classifier</text>
       <text x="14" y="115" fill="#94a3b8" font-size="11">• Sign(Tpl - Tst): Missing vs Extra Copper</text>
-      <text x="14" y="129" fill="#94a3b8" font-size="11">• Open, Short, Mousebite, Spur, Copper, Hole</text>
+      <text x="14" y="129" fill="#94a3b8" font-size="11">• Six classes, incl. Pin-hole / Spurious Cu</text>
 
       <!-- 3. NMS Filter -->
       <rect y="150" width="248" height="55" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
       <text x="14" y="172" fill="#f8fafc" font-size="12" font-weight="700">NMS Bounding Box Extraction</text>
-      <text x="14" y="190" fill="#94a3b8" font-size="11">• IoU &gt; 0.45 Suppression (~14.8µs overhead)</text>
+      <text x="14" y="190" fill="#94a3b8" font-size="11">• Suppress when IoU ≥ 0.45 (inside detect)</text>
     </g>
 
     <!-- FastPath Split Branch -->
     <rect x="16" y="310" width="248" height="52" rx="8" fill="#022c22" stroke="#059669" stroke-width="1.5"/>
     <text x="140" y="330" fill="#34d399" font-size="11" font-weight="800" text-anchor="middle">FAST-PATH BYPASS GATE</text>
-    <text x="140" y="348" fill="#a7f3d0" font-size="11" text-anchor="middle">Detections == 0 ? ➔ Pure Pass (0 Tokens, 0.28ms)</text>
+    <text x="140" y="348" fill="#a7f3d0" font-size="11" text-anchor="middle">Detections == 0 ? ➔ PASS, 0 VLM tokens</text>
   </g>
 
   <!-- ==================== FASTPATH HIGHWAY ==================== -->
   <path d="M 400 482 L 400 560 L 980 560" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arrow-green)"/>
   <rect x="570" y="544" width="230" height="28" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
-  <text x="685" y="562" fill="#6ee7b7" font-size="11" font-weight="700" text-anchor="middle">⚡ ZERO-TOKEN BYPASS: PASS (0.28ms)</text>
+  <text x="685" y="562" fill="#6ee7b7" font-size="11" font-weight="700" text-anchor="middle">⚡ ZERO-TOKEN BYPASS: PASS (no VLM call)</text>
 
   <!-- Arrow Stage 1 -> Stage 2 -->
   <path d="M 555 220 L 595 220" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow-amber)"/>
@@ -130,7 +130,7 @@
     <g transform="translate(14, 60)">
       <!-- IPC Rule Engine -->
       <rect width="172" height="125" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-      <text x="12" y="22" fill="#fbbf24" font-size="12" font-weight="700">IPC-A-600 / 610</text>
+      <text x="12" y="22" fill="#fbbf24" font-size="12" font-weight="700">IPC-A-600 area rules</text>
       <text x="12" y="38" fill="#94a3b8" font-size="11">Stand-in Area Limits:</text>
       <text x="12" y="56" fill="#f8fafc" font-size="11">• Open / Short: 0 px</text>
       <text x="12" y="72" fill="#f8fafc" font-size="11">• Mousebite: 250 / 120 px</text>
@@ -214,7 +214,7 @@
       <text x="8" y="220" fill="#fecaca" font-size="10">Count &gt;= 3 in batch:</text>
       <text x="8" y="238" fill="#ef4444" font-size="10" font-weight="800">➔ LINE HALT</text>
       <text x="8" y="254" fill="#fca5a5" font-size="9">Overrules All Models</text>
-      <text x="8" y="270" fill="#fca5a5" font-size="9">Physical Interlock</text>
+      <text x="8" y="270" fill="#fca5a5" font-size="9">halt_production_line flag</text>
     </g>
   </g>
 
@@ -222,8 +222,8 @@
   <g transform="translate(480, 620)">
     <rect width="745" height="150" rx="12" fill="#1e293b" stroke="#475569" stroke-width="1.5" filter="url(#card-glow)"/>
     
-    <text x="24" y="32" fill="#f8fafc" font-size="14" font-weight="800">FACTORY ACTUATION &amp; OPERATOR HUD</text>
-    <text x="24" y="50" fill="#94a3b8" font-size="12">Verified Verdict Routing across SMT Manufacturing Execution System (MES)</text>
+    <text x="24" y="32" fill="#f8fafc" font-size="14" font-weight="800">OPERATOR CONSOLE</text>
+    <text x="24" y="50" fill="#94a3b8" font-size="12">Web console at / : disposition, audit JSON, and the line-halt flag</text>
 
     <!-- Console Badge -->
     <g transform="translate(24, 70)">
@@ -241,13 +241,13 @@
       <text x="16" y="46" fill="#e2e8f0" font-size="12">PASS · REWORK · SCRAP</text>
     </g>
 
-    <!-- Emergency Halt Relay -->
+    <!-- Console line-halt banner -->
     <g transform="translate(506, 70)">
       <rect width="215" height="60" rx="8" fill="#450a0a" stroke="#dc2626" stroke-width="1.5"/>
       <circle cx="24" cy="30" r="10" fill="#dc2626"/>
       <text x="24" y="34" fill="#ffffff" font-size="11" font-weight="800" text-anchor="middle">!</text>
       <text x="44" y="25" fill="#fca5a5" font-size="11" font-weight="800">EMERGENCY LINE HALT</text>
-      <text x="44" y="45" fill="#fecaca" font-size="10">Trips SMT Pick-and-Place Relay</text>
+      <text x="44" y="45" fill="#fecaca" font-size="10">Raises the console halt banner</text>
     </g>
   </g>
 

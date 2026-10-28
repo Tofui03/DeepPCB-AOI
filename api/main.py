@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,8 @@ app = FastAPI(
     version="1.1.0",
 )
 
-dataset = DeepPCBDataset()
+# Mock boards are test-only. pytest sets DEEPPCB_ALLOW_MOCK; the server does not.
+dataset = DeepPCBDataset(allow_mock=os.environ.get("DEEPPCB_ALLOW_MOCK") == "1")
 detector = ONNXPCBDetector(score_threshold=145.0)
 batch_store = BatchTelemetryStore()
 agent_graph = PCBAOIAgentGraph(detector=detector, batch_store=batch_store)

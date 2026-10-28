@@ -15,7 +15,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from core.agent.schemas import BOARD_DIM_PX, BoundingBoxDetection  # noqa: E402
 from core.data.deeppcb_loader import (  # noqa: E402
     DEEPPCB_CLASS_MAP,
-    DEFAULT_DEEPPCB_ROOT,
+    MOCK_DEEPPCB_ROOT,
+    REAL_DEEPPCB_ROOT,
     DeepPCBDataset,
     parse_annotation_file,
 )
@@ -47,7 +48,8 @@ class TestDeepPCBLoader:
 
     def test_parse_real_deeppcb_annotation_file(self) -> None:
         """Parsing a real DeepPCB `.txt` file should return ground-truth boxes with confidence=1.0."""
-        sample_txt = DEFAULT_DEEPPCB_ROOT / "group20085" / "20085_not" / "20085000.txt"
+        root = REAL_DEEPPCB_ROOT if REAL_DEEPPCB_ROOT.is_dir() else MOCK_DEEPPCB_ROOT
+        sample_txt = root / "group20085" / "20085_not" / "20085000.txt"
         boxes = parse_annotation_file(sample_txt)
         assert len(boxes) == 6
         assert all(isinstance(b, BoundingBoxDetection) for b in boxes)
@@ -65,46 +67,50 @@ class TestDeepPCBLoader:
         with pytest.raises(ValueError, match="Unknown DeepPCB class_id=9"):
             parse_annotation_file(bad_txt)
 
+    def test_explicit_missing_root_does_not_load_mock(self, tmp_path: Path) -> None:
+        """A missing path raises, including the real root, and does not substitute the fixture."""
+        with pytest.raises(FileNotFoundError):
+            DeepPCBDataset(tmp_path / "missing-pcbdata")
+        if not REAL_DEEPPCB_ROOT.is_dir():
+            with pytest.raises(FileNotFoundError):
+                DeepPCBDataset()
+            with pytest.raises(FileNotFoundError):
+                DeepPCBDataset(REAL_DEEPPCB_ROOT)
+
     def test_dataset_splits_and_zero_leakage_audit(self) -> None:
-        """DeepPCBDataset should load all 1,500 pairs and verify zero trainval/test leakage."""
-        dataset = DeepPCBDataset(DEFAULT_DEEPPCB_ROOT)
+        """Real corpus is 1,000/500. The mock fixture is exactly one pair per split."""
+        dataset = DeepPCBDataset(allow_mock=True)
         if dataset.is_mock:
-            assert len(dataset.trainval_samples) >= 1
-            assert len(dataset.test_samples) >= 1
-            audit = dataset.verify_zero_leakage()
-            assert audit["zero_leakage"] is True
-            assert audit["overlap_count"] == 0
-            assert audit["trainval_count"] >= 1
-            assert audit["test_count"] >= 1
-            assert audit["total_count"] >= 2
-            assert isinstance(audit["trainval_sha256"], str) and len(audit["trainval_sha256"]) == 64
-            assert isinstance(audit["test_sha256"], str) and len(audit["test_sha256"]) == 64
-            assert audit["trainval_sha256"] != audit["test_sha256"]
-
-            template_img, test_img, gt_boxes = dataset.load_sample(0, split="test")
-            assert template_img.shape == (BOARD_DIM_PX, BOARD_DIM_PX)
-            assert test_img.shape == (BOARD_DIM_PX, BOARD_DIM_PX)
-            assert len(gt_boxes) > 0
-            return
-
-        assert len(dataset.trainval_samples) == 1000
-        assert len(dataset.test_samples) == 500
+            assert len(dataset.trainval_samples) == 1
+            assert len(dataset.test_samples) == 1
+            assert dataset.trainval_samples[0].sample_id == "20085001"
+            assert dataset.test_samples[0].sample_id == "20085000"
+        else:
+            assert len(dataset.trainval_samples) == 1000
+            assert len(dataset.test_samples) == 500
 
         audit = dataset.verify_zero_leakage()
         assert audit["zero_leakage"] is True
         assert audit["overlap_count"] == 0
-        assert audit["trainval_count"] == 1000
-        assert audit["test_count"] == 500
-        assert audit["total_count"] == 1500
+        assert audit["is_mock"] is dataset.is_mock
+        assert audit["trainval_count"] == len(dataset.trainval_samples)
+        assert audit["test_count"] == len(dataset.test_samples)
+        assert audit["total_count"] == len(dataset.trainval_samples) + len(dataset.test_samples)
+        if dataset.is_mock:
+            assert audit["total_count"] == 2
+        else:
+            assert audit["total_count"] == 1500
         assert isinstance(audit["trainval_sha256"], str) and len(audit["trainval_sha256"]) == 64
         assert isinstance(audit["test_sha256"], str) and len(audit["test_sha256"]) == 64
         assert audit["trainval_sha256"] != audit["test_sha256"]
 
-        # Verify loading an actual image pair and its annotations
         template_img, test_img, gt_boxes = dataset.load_sample(0, split="test")
         assert template_img.shape == (BOARD_DIM_PX, BOARD_DIM_PX)
         assert test_img.shape == (BOARD_DIM_PX, BOARD_DIM_PX)
-        assert len(gt_boxes) > 0
+        if dataset.is_mock:
+            assert len(gt_boxes) == 6
+        else:
+            assert len(gt_boxes) > 0
 
 
 class TestDiffPreprocess:
@@ -185,7 +191,7 @@ class TestONNXDetector:
         assert DEFAULT_ONNX_MODEL_PATH.is_file()
         assert detector.execution_provider in ("CUDAExecutionProvider", "CPUExecutionProvider")
 
-        dataset = DeepPCBDataset(DEFAULT_DEEPPCB_ROOT)
+        dataset = DeepPCBDataset(allow_mock=True)
         template_img, test_img, _ = dataset.load_sample(0, split="test")
 
         detections, latency_ms = detector.detect(template_img, test_img)
@@ -196,7 +202,7 @@ class TestONNXDetector:
     def test_rule2_zero_token_fast_path_bypass_on_identical_board(self) -> None:
         """Identical template and test images return no boxes and fast_path_pass in under 15 ms."""
         detector = ONNXPCBDetector()
-        dataset = DeepPCBDataset(DEFAULT_DEEPPCB_ROOT)
+        dataset = DeepPCBDataset(allow_mock=True)
         template_img, _, _ = dataset.load_sample(0, split="test")
 
         report = detector.inspect_fast_path(template_img, template_img.copy())
