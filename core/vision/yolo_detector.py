@@ -33,6 +33,22 @@ CLASS_MAP: dict[int, DefectClass] = {
 }
 
 
+def apply_class_aware_nms(
+    boxes: list[BoundingBoxDetection],
+    iou_threshold: float = 0.45,
+) -> list[BoundingBoxDetection]:
+    """Apply NMS independently per defect class, matching YOLO standard evaluation."""
+    if not boxes:
+        return []
+    kept: list[BoundingBoxDetection] = []
+    by_class: dict[str, list[BoundingBoxDetection]] = {}
+    for b in boxes:
+        by_class.setdefault(b.defect_class, []).append(b)
+    for cls_boxes in by_class.values():
+        kept.extend(apply_nms(cls_boxes, iou_threshold=iou_threshold))
+    return kept
+
+
 class YOLOv8PCBDetector:
     """YOLOv8 3-channel ONNX defect detector ([template, test, absdiff])."""
 
@@ -99,8 +115,9 @@ class YOLOv8PCBDetector:
         # Compute absdiff
         diff = cv2.absdiff(template_gray, test_gray)
 
-        # Composite into 3 channels [template, test, absdiff] and normalize 0..1
-        composite = np.stack([template_gray, test_gray, diff], axis=0).astype(np.float32) / 255.0
+        # Composite into 3 channels [diff, test, template] matching RGB tensor order
+        # (cv2.imwrite saves BGR=[template, test, diff], which Ultralytics reads as RGB=[diff, test, template])
+        composite = np.stack([diff, test_gray, template_gray], axis=0).astype(np.float32) / 255.0
         tensor_in = composite[np.newaxis, ...]  # Shape [1, 3, 640, 640]
 
         outputs = self.session.run([self.output_name], {self.input_name: tensor_in})
@@ -146,7 +163,7 @@ class YOLOv8PCBDetector:
                     )
                 )
 
-        filtered = apply_nms(candidates, iou_threshold=self.iou_threshold)
+        filtered = apply_class_aware_nms(candidates, iou_threshold=self.iou_threshold)
         latency_ms = round((time.perf_counter() - t_start) * 1000.0, 4)
         return filtered, latency_ms
 
