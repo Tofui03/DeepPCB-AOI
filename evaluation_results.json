@@ -1,0 +1,347 @@
+{
+  "Method_A_Differential_ONNX": {
+    "num_samples": 500,
+    "latency_ms": {
+      "mean": 6.41,
+      "p50": 6.02,
+      "p95": 10.01,
+      "fps": 156.1
+    },
+    "iou_0.33": {
+      "class_aware": {
+        "precision": 0.0119,
+        "recall": 0.0914,
+        "f1": 0.0211,
+        "tp": 287,
+        "fp": 23760,
+        "fn": 2853
+      },
+      "class_agnostic_localization": {
+        "precision": 0.0549,
+        "recall": 0.4204,
+        "f1": 0.0971
+      },
+      "per_class": {
+        "Open": {
+          "precision": 0.0094,
+          "recall": 0.088,
+          "f1": 0.017,
+          "gt_count": 659
+        },
+        "Short": {
+          "precision": 0.0072,
+          "recall": 0.1234,
+          "f1": 0.0135,
+          "gt_count": 478
+        },
+        "Mousebite": {
+          "precision": 0.0514,
+          "recall": 0.2099,
+          "f1": 0.0826,
+          "gt_count": 586
+        },
+        "Spur": {
+          "precision": 0.0641,
+          "recall": 0.089,
+          "f1": 0.0745,
+          "gt_count": 483
+        },
+        "Spurious Copper": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "gt_count": 464
+        },
+        "Pin-hole": {
+          "precision": 0.0014,
+          "recall": 0.0085,
+          "f1": 0.0023,
+          "gt_count": 470
+        }
+      }
+    },
+    "iou_0.5": {
+      "class_aware": {
+        "precision": 0.0046,
+        "recall": 0.035,
+        "f1": 0.0081,
+        "tp": 110,
+        "fp": 23937,
+        "fn": 3030
+      },
+      "class_agnostic_localization": {
+        "precision": 0.0363,
+        "recall": 0.278,
+        "f1": 0.0642
+      },
+      "per_class": {
+        "Open": {
+          "precision": 0.0023,
+          "recall": 0.0212,
+          "f1": 0.0041,
+          "gt_count": 659
+        },
+        "Short": {
+          "precision": 0.0039,
+          "recall": 0.0669,
+          "f1": 0.0073,
+          "gt_count": 478
+        },
+        "Mousebite": {
+          "precision": 0.0251,
+          "recall": 0.1024,
+          "f1": 0.0403,
+          "gt_count": 586
+        },
+        "Spur": {
+          "precision": 0.006,
+          "recall": 0.0083,
+          "f1": 0.0069,
+          "gt_count": 483
+        },
+        "Spurious Copper": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "gt_count": 464
+        },
+        "Pin-hole": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "gt_count": 470
+        }
+      }
+    }
+  },
+  "Method_B_YOLOv8n_SingleImage": {
+    "num_samples": 500,
+    "latency_ms": {
+      "mean": 24.72,
+      "p50": 10.38,
+      "p95": 15.36,
+      "fps": 40.4
+    },
+    "iou_0.33": {
+      "class_aware": {
+        "precision": 0.8703,
+        "recall": 0.9723,
+        "f1": 0.9185,
+        "tp": 3053,
+        "fp": 455,
+        "fn": 87
+      },
+      "class_agnostic_localization": {
+        "precision": 0.8751,
+        "recall": 0.9777,
+        "f1": 0.9236
+      },
+      "per_class": {
+        "Open": {
+          "precision": 0.9219,
+          "recall": 0.9848,
+          "f1": 0.9523,
+          "gt_count": 659
+        },
+        "Short": {
+          "precision": 0.8066,
+          "recall": 0.9163,
+          "f1": 0.858,
+          "gt_count": 478
+        },
+        "Mousebite": {
+          "precision": 0.9338,
+          "recall": 0.9863,
+          "f1": 0.9593,
+          "gt_count": 586
+        },
+        "Spur": {
+          "precision": 0.9027,
+          "recall": 0.9607,
+          "f1": 0.9308,
+          "gt_count": 483
+        },
+        "Spurious Copper": {
+          "precision": 0.9209,
+          "recall": 0.9784,
+          "f1": 0.9488,
+          "gt_count": 464
+        },
+        "Pin-hole": {
+          "precision": 0.7402,
+          "recall": 1.0,
+          "f1": 0.8507,
+          "gt_count": 470
+        }
+      }
+    },
+    "iou_0.5": {
+      "class_aware": {
+        "precision": 0.8677,
+        "recall": 0.9694,
+        "f1": 0.9158,
+        "tp": 3044,
+        "fp": 464,
+        "fn": 96
+      },
+      "class_agnostic_localization": {
+        "precision": 0.8717,
+        "recall": 0.9739,
+        "f1": 0.92
+      },
+      "per_class": {
+        "Open": {
+          "precision": 0.919,
+          "recall": 0.9818,
+          "f1": 0.9494,
+          "gt_count": 659
+        },
+        "Short": {
+          "precision": 0.8029,
+          "recall": 0.9121,
+          "f1": 0.8541,
+          "gt_count": 478
+        },
+        "Mousebite": {
+          "precision": 0.9289,
+          "recall": 0.9812,
+          "f1": 0.9544,
+          "gt_count": 586
+        },
+        "Spur": {
+          "precision": 0.9008,
+          "recall": 0.9586,
+          "f1": 0.9288,
+          "gt_count": 483
+        },
+        "Spurious Copper": {
+          "precision": 0.9209,
+          "recall": 0.9784,
+          "f1": 0.9488,
+          "gt_count": 464
+        },
+        "Pin-hole": {
+          "precision": 0.7386,
+          "recall": 0.9979,
+          "f1": 0.8489,
+          "gt_count": 470
+        }
+      }
+    }
+  },
+  "Method_C_YOLOv8n_3Channel": {
+    "num_samples": 500,
+    "latency_ms": {
+      "mean": 9.98,
+      "p50": 9.7,
+      "p95": 11.24,
+      "fps": 100.2
+    },
+    "iou_0.33": {
+      "class_aware": {
+        "precision": 0.901,
+        "recall": 0.9828,
+        "f1": 0.9401,
+        "tp": 3086,
+        "fp": 339,
+        "fn": 54
+      },
+      "class_agnostic_localization": {
+        "precision": 0.9104,
+        "recall": 0.993,
+        "f1": 0.9499
+      },
+      "per_class": {
+        "Open": {
+          "precision": 0.891,
+          "recall": 0.9803,
+          "f1": 0.9335,
+          "gt_count": 659
+        },
+        "Short": {
+          "precision": 0.8965,
+          "recall": 0.9603,
+          "f1": 0.9273,
+          "gt_count": 478
+        },
+        "Mousebite": {
+          "precision": 0.886,
+          "recall": 0.9812,
+          "f1": 0.9312,
+          "gt_count": 586
+        },
+        "Spur": {
+          "precision": 0.8827,
+          "recall": 0.9814,
+          "f1": 0.9294,
+          "gt_count": 483
+        },
+        "Spurious Copper": {
+          "precision": 0.9315,
+          "recall": 0.9957,
+          "f1": 0.9625,
+          "gt_count": 464
+        },
+        "Pin-hole": {
+          "precision": 0.9289,
+          "recall": 1.0,
+          "f1": 0.9631,
+          "gt_count": 470
+        }
+      }
+    },
+    "iou_0.5": {
+      "class_aware": {
+        "precision": 0.8999,
+        "recall": 0.9815,
+        "f1": 0.9389,
+        "tp": 3082,
+        "fp": 343,
+        "fn": 58
+      },
+      "class_agnostic_localization": {
+        "precision": 0.9095,
+        "recall": 0.992,
+        "f1": 0.949
+      },
+      "per_class": {
+        "Open": {
+          "precision": 0.8883,
+          "recall": 0.9772,
+          "f1": 0.9306,
+          "gt_count": 659
+        },
+        "Short": {
+          "precision": 0.8945,
+          "recall": 0.9582,
+          "f1": 0.9253,
+          "gt_count": 478
+        },
+        "Mousebite": {
+          "precision": 0.886,
+          "recall": 0.9812,
+          "f1": 0.9312,
+          "gt_count": 586
+        },
+        "Spur": {
+          "precision": 0.8827,
+          "recall": 0.9814,
+          "f1": 0.9294,
+          "gt_count": 483
+        },
+        "Spurious Copper": {
+          "precision": 0.9315,
+          "recall": 0.9957,
+          "f1": 0.9625,
+          "gt_count": 464
+        },
+        "Pin-hole": {
+          "precision": 0.9269,
+          "recall": 0.9979,
+          "f1": 0.9611,
+          "gt_count": 470
+        }
+      }
+    }
+  }
+}

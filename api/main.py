@@ -39,7 +39,14 @@ app = FastAPI(
 
 # Mock boards are test-only. pytest sets DEEPPCB_ALLOW_MOCK; the server does not.
 dataset = DeepPCBDataset(allow_mock=os.environ.get("DEEPPCB_ALLOW_MOCK") == "1")
-detector = ONNXPCBDetector(score_threshold=145.0)
+
+DETECTOR_BACKEND = os.environ.get("DETECTOR_BACKEND", "diff").lower()
+if DETECTOR_BACKEND in ("yolo", "yolov8"):
+    from core.vision.yolo_detector import YOLOv8PCBDetector
+    detector = YOLOv8PCBDetector()
+else:
+    detector = ONNXPCBDetector(score_threshold=145.0)
+
 batch_store = BatchTelemetryStore()
 agent_graph = PCBAOIAgentGraph(detector=detector, batch_store=batch_store)
 
