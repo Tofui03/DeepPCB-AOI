@@ -1,10 +1,8 @@
-"""Deterministic IPC-A-600 Class 2 and Class 3 compliance lookup tool (Stage 2, Rule 3).
+"""Pixel-area limits used as a stand-in for IPC-A-600 Class 2 and Class 3.
 
-Architectural Rules Enforced:
-- Rule 3: Ground-truth IPC-A-600 threshold evaluation runs deterministically in Python
-  before any VLM/Agent triage reasoning.
-- Rule 5: `Open` and `Short` defects have a zero-tolerance (`max_allowed_px = 0`)
-  threshold across both IPC Class 2 (Dedicated Service) and IPC Class 3 (High Reliability).
+Open and Short always violate (``max_allowed_px = 0``). Other classes compare the
+box area with a fixed pixel cap that is tighter for Class 3. The numbers in
+``IPC_A_600_SPEC_TABLE`` are project limits, not a certified copy of the standard.
 """
 
 from __future__ import annotations
@@ -173,12 +171,11 @@ def check_ipc_rule(
     *,
     relative_width_pct: float | None = None,
 ) -> IPCComplianceResult:
-    """Evaluate a measured defect pixel area against verified IPC-A-600 Class 2/3 thresholds.
+    """Compare ``measured_px`` with the class limit for ``defect_class``.
 
-    Rules:
-    - `Open` and `Short` have `max_allowed_px = 0` and ALWAYS violate IPC-A-600.
-    - For `Mousebite`, `Spur`, `Spurious Copper`, and `Pin-hole`, `violates_ipc` is `True`
-      when `measured_px > max_allowed_px` (or if optional `relative_width_pct` exceeds class limit).
+    Open and Short always violate. Other classes violate when the area is above
+    ``max_allowed_px``. If ``relative_width_pct`` is passed, they also violate above
+    25% (Class 2) or 20% (Class 3). The inspection pipeline does not pass that argument.
     """
     if defect_class not in IPC_A_600_SPEC_TABLE:
         raise ValueError(

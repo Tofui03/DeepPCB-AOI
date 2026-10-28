@@ -1,10 +1,7 @@
-"""4-Stage DeepPCB-AOI State Graph orchestrating Edge Vision, Ground-Truth Tools, VLM Triage, and Safety Guardrails.
+"""Inspection pipeline: detect, check rules, optional model triage, then safety overrides.
 
-Pipeline Architecture:
-- Stage 1: Deterministic ONNX Runtime detection (`ONNXPCBDetector.detect`) + Rule 2 Fast-Path Gate.
-- Stage 2: Ground-Truth Tool Execution (`crop_defect_roi`, `evaluate_detection_ipc`, `record_and_query_batch`).
-- Stage 3: Bounded VLM Semantic Triage (`MAX_VLM_RETRIES = 2`) with deterministic IPC rule engine fallback.
-- Stage 4: Deterministic Python Safety Guardrails (`apply_safety_guardrails`).
+No boxes means PASS and the later stages are skipped. A configured VLM is called at most
+``1 + MAX_VLM_RETRIES`` times; invalid output falls back to the rule engine.
 """
 
 from __future__ import annotations
@@ -43,7 +40,7 @@ def build_deterministic_fallback_decision(
     ipc_result: IPCComplianceResult,
     batch_result: BatchTrendResult,
 ) -> InspectionDecision:
-    """Build a 100% deterministic `InspectionDecision` from verified Stage 2 tool outputs."""
+    """Build an ``InspectionDecision`` from the rule result and batch count."""
     meta = get_ipc_metadata(bbox.defect_class)
 
     if bbox.defect_class in ("Open", "Short"):
@@ -91,7 +88,7 @@ class PCBAOIAgentGraph:
         batch_result: BatchTrendResult,
         roi_crop: np.ndarray,
     ) -> tuple[InspectionDecision, dict[str, Any]]:
-        """Execute Stage 3 VLM triage with strict `MAX_VLM_RETRIES = 2` cap and deterministic fallback."""
+        """Run the optional VLM, then fall back to the rule engine if it never validates."""
         if self.vlm_callable is None:
             fallback = build_deterministic_fallback_decision(bbox, ipc_result, batch_result)
             return fallback, {
@@ -156,7 +153,6 @@ class PCBAOIAgentGraph:
         """Execute the 4-stage inspection pipeline and return `(report, execution_trace)`."""
         trace: list[dict[str, Any]] = []
 
-        # Stage 1: Deterministic ONNX Vision
         detections, stage1_latency_ms = self.detector.detect(template_img, test_img)
         trace.append(
             {
@@ -167,7 +163,6 @@ class PCBAOIAgentGraph:
             }
         )
 
-        # Rule 2: Zero-Token Fast-Path Bypass
         if len(detections) == 0:
             trace.append(
                 {
@@ -188,7 +183,6 @@ class PCBAOIAgentGraph:
 
         decisions: list[InspectionDecision] = []
         for idx, bbox in enumerate(detections):
-            # Stage 2: Ground-Truth Pre-Triage Tools (Rule 3)
             roi_crop = crop_defect_roi(test_img, bbox, padding=32)
             ipc_result = evaluate_detection_ipc(bbox, ipc_class=ipc_class)
             batch_result = self.batch_store.record_and_query_batch(
@@ -207,7 +201,6 @@ class PCBAOIAgentGraph:
                 }
             )
 
-            # Stage 3: Bounded VLM Triage or Deterministic Fallback (Rule 4)
             stage3_decision, stage3_trace = self._invoke_stage3_triage(
                 bbox=bbox,
                 ipc_result=ipc_result,
@@ -217,7 +210,6 @@ class PCBAOIAgentGraph:
             stage3_trace["defect_index"] = idx
             trace.append(stage3_trace)
 
-            # Stage 4: Deterministic Python Safety Guardrails (Rule 5)
             final_decision = apply_safety_guardrails(
                 decision=stage3_decision,
                 bbox=bbox,

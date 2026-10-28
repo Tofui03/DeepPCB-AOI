@@ -1,198 +1,129 @@
-<div id="top">
+# DeepPCB-AOI
 
-<div align="center">
+Bare-board optical inspection for the six defect classes in the [DeepPCB](https://github.com/tangsanli5201/DeepPCB) dataset (Tang, He, Huang, and Yang, 2019). A template image is compared with a test image. The difference is turned into boxes, each box is checked against a pixel-area limit, and a short rule set can override the final disposition.
 
-# DEEPPCB-AOI
+The checked-in ONNX file is a fixed difference graph, and the class label is a geometry heuristic. There is no trained checkpoint and no accuracy table in this repo. Tests check that Stage 1 stays under 15 ms. That budget is not a measured frames-per-second claim.
 
-<em>Industrial Automated Optical Inspection (AOI) & IPC-A-600 Semantic Triage Platform</em>
+![Template, test image with detector boxes, and the difference map for one DeepPCB pair.](docs/inspect-loop.gif)
 
-<!-- BADGES -->
-<p align="center">
-  <img src="https://img.shields.io/github/last-commit/Tofui03/DeepPCB-AOI?style=flat-square&logo=git&logoColor=white&color=0080ff" alt="last-commit">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat-square&logo=FastAPI&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/ONNX_Runtime-1.17+-005CED.svg?style=flat-square&logo=ONNX&logoColor=white" alt="ONNX Runtime">
-  <img src="https://img.shields.io/badge/IPC--A--600-Class_2_%26_3-orange.svg?style=flat-square" alt="IPC-A-600">
-  <img src="https://img.shields.io/badge/tests-84%20passed-brightgreen.svg?style=flat-square" alt="tests">
-</p>
+## Defect classes
 
-</div>
-</div>
+| Class | What it is on the copper |
+| --- | --- |
+| Open | Break in a trace |
+| Short | Copper bridge between traces |
+| Mousebite | Nick in the trace edge |
+| Spur | Sharp copper protrusion |
+| Spurious Copper | Isolated copper speck |
+| Pin-hole | Small void in copper |
 
----
+DeepPCB labels use ids 1–6 in that order. Images are 640×640.
 
-## 📄 Table of Contents
+## Pipeline
 
-- [✨ Overview](#-overview)
-- [📌 Key Features](#-key-features)
-- [📐 6 Canonical Defect Classes](#-6-canonical-defect-classes)
-- [🏛️ System Architecture](#️-system-architecture)
-- [📁 Project Structure](#-project-structure)
-    - [📑 Project Index](#-project-index)
-- [🚀 Getting Started](#-getting-started)
-    - [📋 Prerequisites](#-prerequisites)
-    - [⚙️ Installation](#️-installation)
-    - [💻 Usage & Web Console](#-usage--web-console)
-    - [🧪 Testing](#-testing)
-- [📊 IPC-A-600 Compliance Matrix](#-ipc-a-600-compliance-matrix)
+1. **Detect.** `core/vision` resizes nothing (inputs must already be 640×640), runs the ONNX graph, and groups high-scoring cells with connected components. Class comes from the sign of `template - test` (missing copper vs extra copper), plus area, aspect ratio, and fill. Non-maximum suppression drops overlaps. No boxes means `disposition = PASS` and stages 2–4 do not run.
+2. **Rules and batch history.** `core/tools` compares box area with the table below and increments a SQLite count for `(batch_id, defect_class)`.
+3. **Optional model triage.** If a callable is configured, its output must validate as `InspectionDecision`. It is tried at most three times (`MAX_VLM_RETRIES = 2`). Anything else falls back to the rule engine. The default server does not call an external model. The callable does not edit box coordinates.
+4. **Overrides** in `core/agent/guardrails.py`. Open and Short cannot be PASS (forced to SCRAP / CRITICAL). An over-limit box cannot be PASS. The third occurrence of the same class in a batch sets `halt_production_line`.
 
----
+![Pipeline diagram](docs/architecture/system-architecture.svg)
 
-## ✨ Overview
+The editable source is `docs/architecture/system-architecture.excalidraw`. `docs/architecture/system-architecture.png` is an older export and still shows a 512×512 caption and a 263 FPS figure. Those numbers are not what the code does. Use the SVG.
 
-**DeepPCB-AOI** is an industrial Automated Optical Inspection and IPC-A-600 compliance triage agent designed for high-speed Surface Mount Technology (SMT) and bare-board PCB manufacturing lines.
+## Area limits
 
-Built on the **"10% Model + 90% Deterministic Harness"** methodology:
-- Computer vision handles high-speed defect localization and pixel measurement deterministically via ONNX Runtime (< 4ms).
-- Python safety guardrails enforce IPC-A-600 standards and line-halt safety policies without relying on unconstrained LLM heuristics.
+`core/tools/ipc_rules.py` uses these pixel areas as a Class 2 / Class 3 stand-in. IPC-A-600 itself is written in conductor width and spacing; the clause strings here are names for this table. Open and Short always fail the check.
 
----
+| Class | Class 2 max area (px) | Class 3 max area (px) |
+| --- | ---: | ---: |
+| Open | 0 | 0 |
+| Short | 0 | 0 |
+| Mousebite | 250 | 120 |
+| Spur | 200 | 100 |
+| Spurious Copper | 180 | 80 |
+| Pin-hole | 160 | 75 |
 
-## 📌 Key Features
+`check_ipc_rule(..., relative_width_pct=)` can also fail a non-fatal class above 25% (Class 2) or 20% (Class 3). The live pipeline calls `evaluate_detection_ipc`, which does not pass that argument, so decisions use area only.
 
-- ⚡ **Sub-4ms Edge Inference**: Aligned differential template subtraction and morphological analysis powered by ONNX Runtime at **260+ FPS**.
-- 🛡️ **Zero-Token Fast-Path Bypass**: Boards with zero defect candidates bypass LLM/VLM calls instantly (`<15ms` turnaround time, zero API token cost).
-- 📐 **Ground-Truth IPC-A-600 Rule Engine**: Validates defects against verifiable IPC Class 2 (Dedicated Service) and Class 3 (High Reliability) physical criteria.
-- 🔒 **Deterministic Safety Guardrails**: Hard overrides prevent fatal false passes (`Open` / `Short` can never pass). Automatically triggers emergency line halt if batch defect recurrence exceeds $\ge 3$.
-- 🖥️ **Swiss-Industrial Machine Vision Console**: Zero-border-radius, high-density machine telemetry viewport with dual-pane canvas alignment, reticle HUD, and Class 2 / 3 toggles.
+Batch halt threshold: 3 occurrences of the same class (`BATCH_HALT_THRESHOLD`).
 
----
+## ONNX file
 
-## 📐 6 Canonical Defect Classes
+`core/vision/models/deeppcb_diff_detector.onnx` is 696 bytes, small enough to keep in normal git. The graph is IR version 8, opset 13:
 
-| Defect Class | Physical Mechanism | Fatal? | IPC-A-600 Class 2 Tolerance | IPC-A-600 Class 3 Tolerance |
-| :--- | :--- | :---: | :--- | :--- |
-| **Open** | Broken conductive trace causing circuit discontinuity | **YES** | 0% reduction allowed (Immediate Scrap) | 0% reduction allowed (Immediate Scrap) |
-| **Short** | Unintended copper bridge between independent traces | **YES** | 0 clearance violation (Immediate Scrap) | 0 clearance violation (Immediate Scrap) |
-| **Mousebite** | Edge nick/erosion reducing cross-sectional trace width | No | Max 20% conductor width reduction | Max 10% conductor width reduction |
-| **Spur** | Sharp copper protrusion reducing dielectric clearance | No | Residual clearance $\ge 70\%$ | Residual clearance $\ge 80\%$ |
-| **Spurious Copper** | Isolated residual copper speck | No | Disconnected speck $\le 150\,\mu\text{m}^2$ | Disconnected speck $\le 50\,\mu\text{m}^2$ |
-| **Pin-hole** | Localized void inside copper trace or pad | No | Area $\le 20\%$ of pad/trace width | Area $\le 10\%$ of pad/trace width |
+- inputs `template`, `test`: float32 `[1, 1, 640, 640]`
+- `Sub`, then `Abs`
+- two stride-4, kernel-4 convolutions (box average)
+- outputs `diff_score`, `polarity_map`: float32 `[1, 1, 160, 160]`
 
----
+`ONNXPCBDetector` writes the same graph if the file is missing (`build_differential_onnx_model`). Nothing in this repo trains weights.
 
-## 🏛️ System Architecture
+The API constructs the detector with `score_threshold=145`. The class default is 28. Cells below the threshold are ignored before connected components.
 
-<p align="center">
-  <img src="docs/architecture/system-architecture.svg" alt="DeepPCB-AOI System Architecture (Excalidraw)" width="100%"/>
-</p>
-<p align="center">
-  <em>Interactive Excalidraw vector source available at: <a href="docs/architecture/system-architecture.excalidraw"><code>docs/architecture/system-architecture.excalidraw</code></a></em>
-</p>
+## Layout
 
----
-
-## 📁 Project Structure
-
-```sh
-└── DeepPCB-AOI/
-    ├── AGENTS.md                  # Context engineering & deterministic harness rules
-    ├── README.md                  # System documentation & quickstart
-    ├── api/
-    │   └── main.py                # FastAPI endpoints (/api/inspect, /api/agent-triage, /api/benchmark)
-    ├── core/
-    │   ├── agent/                 # 4-stage agent pipeline, schemas & safety guardrails
-    │   ├── tools/                 # IPC-A-600 compliance rules & SQLite batch tracker
-    │   └── vision/                # Differential preprocessing & ONNX Runtime detector
-    ├── tests/                     # 84 automated pytest test suites & adversarial evals
-    └── web/
-        └── index.html             # Swiss-Industrial precision machine vision console
+```
+core/vision/    difference image, ONNX session, NMS
+core/tools/     area table, SQLite batch counts
+core/agent/     Pydantic models, pipeline, overrides
+core/data/      DeepPCB manifests and annotation parser
+api/            FastAPI app
+web/index.html  console served at /
+tests/          pytest
 ```
 
-### 📑 Project Index
+HTTP routes: `GET /`, `GET /api/samples`, `POST /api/inspect`, `POST /api/agent-triage` (alias `POST /api/triage`), `POST /api/upload-triage`, `GET /api/benchmark`, `GET /api/batch-telemetry`, `POST /api/batch-reset`.
 
-<details open>
-<summary><b>Module Architecture Details</b></summary>
-<blockquote>
+## Install
 
-| Module | Component | Primary Responsibility |
-| :--- | :--- | :--- |
-| **`core.vision`** | `diff_preprocess.py` | Aligned morphological differential extraction between template and inspection image |
-| | `onnx_detector.py` | ONNX Runtime accelerated bounding-box inference & feature extraction |
-| **`core.tools`** | `ipc_rules.py` | Ground-truth IPC-A-600 Class 2 / Class 3 dimensional and area thresholds |
-| | `batch_db.py` | SQLite telemetry store for batch recurrence tracking and line halt triggers |
-| **`core.agent`** | `schemas.py` | Strict Pydantic models for defect localization, telemetry, and triage decisions |
-| | `state_graph.py` | 4-Stage state graph orchestration with zero-token fast bypass |
-| | `guardrails.py` | Non-negotiable deterministic safety validator (fatal scrap overrides & emergency halts) |
-| **`api`** | `main.py` | High-throughput asynchronous FastAPI server hosting inspection & triage endpoints |
-| **`web`** | `index.html` | High-density Swiss-industrial machine vision UI console |
-
-</blockquote>
-</details>
-
----
-
-## 🚀 Getting Started
-
-### 📋 Prerequisites
-
-- **Python:** $\ge 3.10$
-- Virtual environment tool (`venv`, `uv`, or `conda`)
-
-### ⚙️ Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Tofui03/DeepPCB-AOI.git
-   cd DeepPCB-AOI
-   ```
-
-2. **Create and activate a virtual environment:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt  # or: pip install fastapi uvicorn onnxruntime opencv-python pydantic pytest
-   ```
-
-### 💻 Usage & Web Console
-
-1. **Launch the FastAPI AOI Server:**
-   ```bash
-   uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-
-2. **Open the Machine Vision Console:**
-   - Open `web/index.html` directly in any modern browser, or navigate to:
-   - `http://localhost:8000/`
-
-3. **Interactive Inspection Flow:**
-   - Load Golden Template & Test Sample image pair.
-   - Run **Deterministic Stage 1** to get instant differential contours and ONNX bounding boxes in `< 4ms`.
-   - Run **Agent Triage** to inspect IPC-A-600 compliance and batch recurrence alerts.
-
-### 🧪 Testing
-
-Execute the comprehensive test harness:
+Python 3.10 or newer.
 
 ```bash
-# Run all 84 unit and integration tests
-pytest tests/ -v
-
-# Run adversarial evaluation test suite
-pytest tests/test_agent_evals.py -v
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
----
+The image set is not in git (see `.gitignore`). Place the upstream tree so `PCBData` sits here:
 
-## 📊 IPC-A-600 Compliance Matrix
+```bash
+git clone --depth 1 https://github.com/tangsanli5201/DeepPCB.git data/DeepPCB
+```
 
-| Defect Class | Area / Dimension | Class 2 Disposition | Class 3 Disposition | Safety Guardrail Enforcement |
-| :--- | :---: | :---: | :---: | :---: |
-| `Open` | Any | **SCRAP** | **SCRAP** | Hard override: Never allows PASS |
-| `Short` | Any | **SCRAP** | **SCRAP** | Hard override: Never allows PASS |
-| `Mousebite` | $\le 10\%$ width reduction | **PASS** | **PASS** | Verified against line tolerance |
-| `Mousebite` | $10\% - 20\%$ reduction | **PASS** | **REWORK** | Class 3 tighter tolerance enforced |
-| `Spur` | $> 30\%$ clearance loss | **REWORK** | **REWORK** | Prevents dielectric breakdown |
-| `Any` | $\ge 3$ repeat in batch | **LINE HALT** | **LINE HALT** | Automated production stop |
+The loader expects `data/DeepPCB/PCBData/trainval.txt` (1,000 lines) and `test.txt` (500 lines), plus `*_temp.jpg`, `*_test.jpg`, and the annotation txt files. `api.main` builds `DeepPCBDataset()` on import, so the server and the API tests need that directory.
 
----
+## Run
 
-<div align="right">
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
 
-[![Back to Top](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#top)
+Open `http://localhost:8000/`. The page is `web/index.html`.
 
-</div>
+`GET /api/benchmark` times the detector on one fixed synthetic pair (two dark rectangles) and returns latency percentiles. The `sla_met` flag is `mean_ms < 15`.
+
+SQLite state defaults to `data/batch_telemetry.db` (gitignored). Tests use `:memory:` or a temp file.
+
+## Tests
+
+```bash
+pytest
+```
+
+Coverage is the schema, the area table, batch counts, guardrail overrides (including a stub model that tries to PASS a short), upload decoding, and Stage 1 latency under 15 ms. There is no held-out accuracy eval.
+
+## Design choices
+
+- Boxes, scores, and areas are computed in `core/vision`. Later stages only read them.
+- An empty detection list returns immediately. The optional model is not called.
+- The area check and the batch counter run before that model call.
+- Model output that fails `InspectionDecision` is retried twice, then replaced by the rule engine.
+- Open, Short, and a repeated class are overridden in Python after triage. `guardrail_overridden` records that.
+
+## Limitations
+
+- Class labels are thresholds in `_classify_defect_morphology`, not a learned classifier. A different `score_threshold` changes which blobs survive.
+- The clause strings are names for the pixel table above.
+- No language model is configured. `simulate_rogue_vlm` sends a fixed PASS payload so the override can be seen.
+- The console is one HTML file with rounded controls, a purple accent, emoji on a few buttons, and placeholder line names.
+- The console, dataset, and batch database resolve from the repo root: `web/index.html`, `data/DeepPCB/PCBData`, and `data/batch_telemetry.db`.

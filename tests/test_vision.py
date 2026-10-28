@@ -175,7 +175,7 @@ class TestONNXDetector:
         assert latency_ms < 15.0, f"Stage 1 latency {latency_ms:.2f}ms exceeded 15ms SLA"
 
     def test_rule2_zero_token_fast_path_bypass_on_identical_board(self) -> None:
-        """Rule 2: Identical template and test boards must return 0 detections and fast_path_pass=True in <15ms."""
+        """Identical template and test images return no boxes and fast_path_pass in under 15 ms."""
         detector = ONNXPCBDetector()
         dataset = DeepPCBDataset(DEFAULT_DEEPPCB_ROOT)
         template_img, _, _ = dataset.load_sample(0, split="test")

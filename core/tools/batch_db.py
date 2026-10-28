@@ -1,10 +1,6 @@
-"""SQLite batch telemetry store for Stage 2 defect trend tracking and line-halt thresholding.
+"""SQLite counts of defect classes per manufacturing batch.
 
-Architectural Rules Enforced:
-- Rule 3: `query_batch_history` / `record_and_query_batch` executes deterministically
-  against the local SQLite store before Stage 3 VLM reasoning.
-- Rule 5: When `occurrence_count >= 3` for the same defect class in an active batch,
-  `threshold_exceeded` is set to `True` to trigger an automated line halt.
+``threshold_exceeded`` is true once ``occurrence_count`` reaches ``BATCH_HALT_THRESHOLD`` (3).
 """
 
 from __future__ import annotations
@@ -15,7 +11,7 @@ from typing import get_args
 
 from core.agent.schemas import BatchTrendResult, DefectClass
 
-DEFAULT_BATCH_DB_PATH = Path("/home/tofui/project/pcb/data/batch_telemetry.db")
+DEFAULT_BATCH_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "batch_telemetry.db"
 BATCH_HALT_THRESHOLD: int = 3
 _VALID_DEFECT_CLASSES: set[str] = set(get_args(DefectClass))
 

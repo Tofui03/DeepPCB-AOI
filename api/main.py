@@ -1,4 +1,4 @@
-"""FastAPI production service for DeepPCB-AOI: 4-Stage Edge Vision & Semantic Triage Platform."""
+"""HTTP API for template/test inspection, triage, and batch counts."""
 
 from __future__ import annotations
 
@@ -24,19 +24,18 @@ from core.tools.batch_db import BatchTelemetryStore
 from core.vision.diff_preprocess import compute_differential_map
 from core.vision.onnx_detector import ONNXPCBDetector
 
-WEB_INDEX_PATH = Path("/home/tofui/project/pcb/web/index.html")
+WEB_INDEX_PATH = Path(__file__).resolve().parents[1] / "web" / "index.html"
 
 app = FastAPI(
-    title="DeepPCB-AOI: Industrial PCB Defect Inspection & Semantic Triage Platform",
+    title="DeepPCB-AOI",
     description=(
-        "10% Model + 90% Deterministic Harness: Stage 1 ONNX Runtime Edge Vision, "
-        "Stage 2 Ground-Truth IPC-A-600 & SQLite Batch Tools, Stage 3 Bounded VLM Triage, "
-        "and Stage 4 Deterministic Python Safety Guardrails."
+        "Compare a bare-board template with a test image, localize six defect classes, "
+        "and apply pixel-area rules plus safety overrides. An optional VLM callable "
+        "can phrase the decision; it does not edit boxes."
     ),
     version="1.1.0",
 )
 
-# Singleton service components
 dataset = DeepPCBDataset()
 detector = ONNXPCBDetector(score_threshold=145.0)
 batch_store = BatchTelemetryStore()
@@ -75,7 +74,7 @@ class InspectRequest(BaseModel):
     )
     clean_board_mode: bool = Field(
         default=False,
-        description="When True, passes template_img as test_img to exercise Rule 2 Fast-Path Bypass.",
+        description="When True, the test image is replaced with the template.",
     )
     colorize_pcb: bool = Field(
         default=False,
@@ -101,13 +100,12 @@ class AgentTriageRequest(BaseModel):
     )
     clean_board_mode: bool = Field(
         default=False,
-        description="When True, exercises Rule 2 Zero-Token Fast-Path Bypass (0 defects).",
+        description="When True, the test image is replaced with the template.",
     )
     simulate_rogue_vlm: bool = Field(
         default=False,
         description=(
-            "When True, injects an adversarial VLM returning disposition='PASS' and "
-            "severity='LOW' so Stage 4 Safety Guardrails visibly override it."
+            "When True, a stub response returns PASS / LOW so the safety override can be checked."
         ),
     )
     colorize_pcb: bool = Field(
@@ -260,7 +258,7 @@ def _execute_triage_pipeline(
 
 @app.get("/", response_class=HTMLResponse)
 def serve_console() -> HTMLResponse:
-    """Serve the interactive Dual-Pane Industrial AOI Web Console."""
+    """Serve ``web/index.html``."""
     if not WEB_INDEX_PATH.is_file():
         raise HTTPException(status_code=500, detail="web/index.html not found.")
     return HTMLResponse(content=WEB_INDEX_PATH.read_text(encoding="utf-8"))
@@ -283,7 +281,7 @@ def list_curated_samples(
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported split={split!r}.")
 
-    # Group pool by PCB group first so default list interleaves diverse groups
+    # Round-robin across groups so the default page is not one board repeated.
     by_group: dict[str, list[DeepPCBSample]] = {}
     for s in pool:
         g_name = s.template_path.parts[-3]

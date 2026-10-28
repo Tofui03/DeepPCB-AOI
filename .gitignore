@@ -1,4 +1,4 @@
-# Python & Virtual Environments
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,30 +9,58 @@ ENV/
 *.egg-info/
 dist/
 build/
+.python-version
 
-# Testing & Caches
+# Tests and type checkers
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+coverage.xml
 .mypy_cache/
 .ruff_cache/
+.tox/
+.ipynb_checkpoints/
 
-# Agent & Local IDE Artifacts
-.agents/
-.impeccable.md
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Editor and OS files
 .vscode/
 .idea/
-notes/
-note/
 *.swp
 *.swo
-
-# Heavy Datasets & Databases (Keep repo lightweight under GitHub 100MB limit)
-data/DeepPCB/
-*.db
-*.sqlite3
-*.log
-
-# OS Generated
+*~
 .DS_Store
 Thumbs.db
+
+# Local notes and assistant tooling (not part of the project)
+.agents/
+.impeccable.md
+notes/
+note/
+
+# Dataset, local databases, training outputs.
+# Anchored so this does not ignore core/data/.
+/data/
+*.db
+*.sqlite
+*.sqlite3
+checkpoints/
+outputs/
+runs/
+logs/
+wandb/
+mlruns/
+*.log
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.npy
+*.npz
+
+# Front-end dependencies, if a package.json is added later
+node_modules/

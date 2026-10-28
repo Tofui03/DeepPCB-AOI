@@ -1,14 +1,10 @@
-"""Stage 4 Deterministic Python Safety Guardrails (Final Arbiter — Rule 5).
+"""Overrides applied after triage.
 
-Architectural Rules Enforced (AGENTS.md Rule 5):
-- Override A (Critical Open/Short): Any `Open` or `Short` defect can NEVER receive
-  `disposition = "PASS"` or non-critical severity. Guardrail forces `disposition = "SCRAP"`
-  and `severity = "CRITICAL"`.
-- Override B (IPC Violation): Any defect with `ipc_result.violates_ipc == True` can NEVER
-  receive `disposition = "PASS"`. Guardrail forces `"SCRAP"` (for Open/Short) or `"REWORK"`
-  (for other classes) and ensures `severity` is at least `"HIGH"`.
-- Override C (Batch Drift Line Halt): If `batch_result.threshold_exceeded` is `True`
-  (`occurrence_count >= 3`), guardrail forces `halt_production_line = True`.
+- Open and Short are forced to disposition SCRAP and severity CRITICAL.
+- A box that exceeds its area limit cannot be PASS. Open and Short become SCRAP;
+  other classes become REWORK. Severity is raised to at least HIGH.
+- When the batch count for that class has reached the halt threshold,
+  ``halt_production_line`` is set.
 """
 
 from __future__ import annotations

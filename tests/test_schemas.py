@@ -204,7 +204,7 @@ class TestInspectionDecisionAndReport:
             )
 
     def test_fast_path_board_inspection_report(self) -> None:
-        """Rule 2 fast-path report with 0 detections and 0 decisions should validate cleanly."""
+        """A report with no detections and fast_path_pass set should validate."""
         report = BoardInspectionReport(
             stage1_latency_ms=4.8,
             detections=[],

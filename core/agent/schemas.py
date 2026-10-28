@@ -1,12 +1,7 @@
-"""Strict Pydantic v2 data contracts for the DeepPCB-AOI 4-stage inspection pipeline.
+"""Pydantic models for boxes, rule results, batch counts, and triage decisions.
 
-Architectural Constraints (AGENTS.md):
-- Rule 1: All spatial coordinates (x1, y1, x2, y2) and pixel area measurements are
-  produced deterministically by Stage 1 (ONNX Vision) within 640x640 image bounds.
-- Rule 2: Zero-token fast-path bypass when 0 defects are detected (`fast_path_pass=True`).
-- Rule 3: Ground-truth tool outputs (`IPCComplianceResult`, `BatchTrendResult`) precede triage.
-- Rule 4: Every agent triage output validates strictly against `InspectionDecision`.
-- Rule 5: Deterministic Python safety guardrails have final override authority.
+Boxes stay inside a 640×640 tile. ``InspectionDecision`` is the only accepted triage payload.
+``fast_path_pass`` is set when the detector returns no boxes.
 """
 
 from __future__ import annotations
@@ -230,7 +225,7 @@ class BoardInspectionReport(BaseModel):
     )
     fast_path_pass: bool = Field(
         ...,
-        description="True when 0 defects are detected and Stages 2-4 are bypassed (Rule 2).",
+        description="True when no boxes are detected and the later stages are skipped.",
     )
     decisions: list[InspectionDecision] = Field(
         default_factory=list,
