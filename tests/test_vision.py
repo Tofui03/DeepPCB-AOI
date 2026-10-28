@@ -222,3 +222,37 @@ class TestONNXDetector:
         assert float(metrics["mean_ms"]) < 15.0
         assert float(metrics["p95_ms"]) < 15.0
         assert float(metrics["fps"]) > 66.0
+
+
+class TestYOLOv8Detector:
+    """Tests for YOLOv8 3-channel ONNX detector execution and fast-path bypass."""
+
+    def test_yolov8_detector_runs_and_detects(self) -> None:
+        from core.vision.yolo_detector import DEFAULT_YOLO_ONNX_PATH, YOLOv8PCBDetector
+
+        if not DEFAULT_YOLO_ONNX_PATH.is_file():
+            pytest.skip("YOLOv8 ONNX model not exported yet")
+
+        detector = YOLOv8PCBDetector()
+        dataset = DeepPCBDataset(allow_mock=True)
+        template_img, test_img, gt_boxes = dataset.load_sample(0, split="test")
+
+        detections, latency_ms = detector.detect(template_img, test_img)
+        assert len(detections) > 0
+        assert all(isinstance(d, BoundingBoxDetection) for d in detections)
+        assert latency_ms > 0
+
+    def test_yolov8_fast_path_identical_board(self) -> None:
+        from core.vision.yolo_detector import DEFAULT_YOLO_ONNX_PATH, YOLOv8PCBDetector
+
+        if not DEFAULT_YOLO_ONNX_PATH.is_file():
+            pytest.skip("YOLOv8 ONNX model not exported yet")
+
+        detector = YOLOv8PCBDetector()
+        dataset = DeepPCBDataset(allow_mock=True)
+        template_img, _, _ = dataset.load_sample(0, split="test")
+
+        report = detector.inspect_fast_path(template_img, template_img.copy())
+        assert report.fast_path_pass is True
+        assert report.detections == []
+
