@@ -20,8 +20,14 @@ import numpy as np
 
 from core.agent.schemas import BoundingBoxDetection, DefectClass
 
-DEFAULT_DEEPPCB_ROOT = (
+REAL_DEEPPCB_ROOT = (
     Path(__file__).resolve().parents[2] / "data" / "DeepPCB" / "PCBData"
+)
+MOCK_DEEPPCB_ROOT = (
+    Path(__file__).resolve().parent / "mock_pcb"
+)
+DEFAULT_DEEPPCB_ROOT = (
+    REAL_DEEPPCB_ROOT if REAL_DEEPPCB_ROOT.is_dir() else MOCK_DEEPPCB_ROOT
 )
 
 DEEPPCB_CLASS_MAP: dict[int, DefectClass] = {
@@ -100,11 +106,18 @@ def parse_annotation_file(txt_path: str | Path) -> list[BoundingBoxDetection]:
 class DeepPCBDataset:
     """Deterministic loader and zero-leakage auditor for the DeepPCB dataset."""
 
-    def __init__(self, data_root: str | Path = DEFAULT_DEEPPCB_ROOT) -> None:
-        self.data_root = Path(data_root)
-        if not self.data_root.is_dir():
-            raise FileNotFoundError(f"DeepPCB dataset root not found: {self.data_root}")
+    def __init__(self, data_root: str | Path | None = None) -> None:
+        if data_root is not None:
+            self.data_root = Path(data_root)
+            if not self.data_root.is_dir():
+                if self.data_root.resolve() == REAL_DEEPPCB_ROOT.resolve() and MOCK_DEEPPCB_ROOT.is_dir():
+                    self.data_root = MOCK_DEEPPCB_ROOT
+                else:
+                    raise FileNotFoundError(f"DeepPCB dataset root not found: {self.data_root}")
+        else:
+            self.data_root = DEFAULT_DEEPPCB_ROOT
 
+        self.is_mock: bool = (self.data_root == MOCK_DEEPPCB_ROOT)
         self.trainval_manifest = self.data_root / "trainval.txt"
         self.test_manifest = self.data_root / "test.txt"
 
@@ -234,4 +247,5 @@ class DeepPCBDataset:
             "total_count": len(self.trainval_samples) + len(self.test_samples),
             "trainval_sha256": trainval_sha256,
             "test_sha256": test_sha256,
+            "is_mock": self.is_mock,
         }

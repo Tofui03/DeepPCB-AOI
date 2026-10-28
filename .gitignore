@@ -41,6 +41,7 @@ Thumbs.db
 .impeccable.md
 notes/
 note/
+graphify-out/
 
 # Dataset, local databases, training outputs.
 # Anchored so this does not ignore core/data/.

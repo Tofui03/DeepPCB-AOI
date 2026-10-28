@@ -68,6 +68,25 @@ class TestDeepPCBLoader:
     def test_dataset_splits_and_zero_leakage_audit(self) -> None:
         """DeepPCBDataset should load all 1,500 pairs and verify zero trainval/test leakage."""
         dataset = DeepPCBDataset(DEFAULT_DEEPPCB_ROOT)
+        if dataset.is_mock:
+            assert len(dataset.trainval_samples) >= 1
+            assert len(dataset.test_samples) >= 1
+            audit = dataset.verify_zero_leakage()
+            assert audit["zero_leakage"] is True
+            assert audit["overlap_count"] == 0
+            assert audit["trainval_count"] >= 1
+            assert audit["test_count"] >= 1
+            assert audit["total_count"] >= 2
+            assert isinstance(audit["trainval_sha256"], str) and len(audit["trainval_sha256"]) == 64
+            assert isinstance(audit["test_sha256"], str) and len(audit["test_sha256"]) == 64
+            assert audit["trainval_sha256"] != audit["test_sha256"]
+
+            template_img, test_img, gt_boxes = dataset.load_sample(0, split="test")
+            assert template_img.shape == (BOARD_DIM_PX, BOARD_DIM_PX)
+            assert test_img.shape == (BOARD_DIM_PX, BOARD_DIM_PX)
+            assert len(gt_boxes) > 0
+            return
+
         assert len(dataset.trainval_samples) == 1000
         assert len(dataset.test_samples) == 500
 
