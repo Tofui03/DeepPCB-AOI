@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1080 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flowchart-title flowchart-desc">
-  <title id="flowchart-title">IPC-A-600 / 610 Defect Decision Logic Flowchart</title>
-  <desc id="flowchart-desc">Industrial flowchart mapping defect classification, IPC-A-600 area thresholds, safety guardrails, and batch drift line halt interlocks.</desc>
+  <title id="flowchart-title">Decision flow for one detected box</title>
+  <desc id="flowchart-desc">Open or Short is SCRAP / CRITICAL. Other classes use a pixel-area limit: over the limit is REWORK / HIGH, within the limit is PASS / LOW. The third count of the same class sets halt_production_line.</desc>
   <defs>
     <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
       <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
@@ -56,82 +56,82 @@
 
   <!-- ==================== ARROW BADGES / LABELS ==================== -->
   <rect x="710" y="226" width="55" height="18" rx="3" fill="#f5f5f5" stroke="rgba(45,49,66,0.15)"/>
-  <text x="737" y="239" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">YES (FATAL)</text>
+  <text x="737" y="239" fill="#bf4520" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="600" text-anchor="middle">YES (SCRAP)</text>
 
   <rect x="548" y="298" width="40" height="16" rx="3" fill="#f5f5f5" stroke="rgba(45,49,66,0.15)"/>
-  <text x="568" y="310" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">NO</text>
+  <text x="568" y="310" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="600" text-anchor="middle">NO</text>
 
   <rect x="662" y="446" width="52" height="18" rx="3" fill="#f5f5f5" stroke="rgba(45,49,66,0.15)"/>
-  <text x="688" y="459" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">YES (&gt; LIMIT)</text>
+  <text x="688" y="459" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="600" text-anchor="middle">YES (&gt; LIMIT)</text>
 
   <rect x="548" y="528" width="55" height="16" rx="3" fill="#f5f5f5" stroke="rgba(45,49,66,0.15)"/>
-  <text x="575" y="540" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">NO (≤ LIMIT)</text>
+  <text x="575" y="540" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="600" text-anchor="middle">NO (≤ LIMIT)</text>
 
   <rect x="640" y="636" width="65" height="18" rx="3" fill="#f5f5f5" stroke="rgba(45,49,66,0.15)"/>
-  <text x="672" y="649" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle">YES (DRIFT ≥ 3)</text>
+  <text x="672" y="649" fill="#bf4520" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="600" text-anchor="middle">YES (DRIFT ≥ 3)</text>
 
   <!-- ==================== FLOWCHART NODES ==================== -->
 
   <!-- 1. Start Oval -->
   <rect x="440" y="25" width="200" height="44" rx="22" fill="#ffffff" stroke="#2d3142" stroke-width="1.5"/>
-  <text x="540" y="52" fill="#2d3142" font-size="13" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Stage 1 Detected BBox</text>
+  <text x="540" y="52" fill="#2d3142" font-size="13" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">Stage 1 Detected BBox</text>
 
   <!-- 2. Step: Class & Geometry Extraction -->
   <rect x="420" y="105" width="240" height="50" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-  <text x="540" y="127" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Extract Polarity &amp; Class</text>
-  <text x="540" y="143" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle">area_px = (x2-x1) * (y2-y1)</text>
+  <text x="540" y="127" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">Extract Polarity &amp; Class</text>
+  <text x="540" y="143" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" text-anchor="middle">area_px = (x2-x1) * (y2-y1)</text>
 
   <!-- 3. Diamond 1: Fatal Class Check -->
   <polygon points="540,190 650,240 540,290 430,240" fill="#ffffff" stroke="#2d3142" stroke-width="1.2"/>
-  <text x="540" y="234" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Is Defect Class</text>
-  <text x="540" y="250" fill="#bf4520" font-size="12" font-family="'Geist', sans-serif" font-weight="700" text-anchor="middle">Open or Short?</text>
+  <text x="540" y="234" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">Is Defect Class</text>
+  <text x="540" y="250" fill="#bf4520" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" text-anchor="middle">Open or Short?</text>
 
   <!-- Node: Forced Scrap (Override A) -->
   <g transform="translate(840, 210)">
     <rect width="180" height="60" rx="6" fill="#ffffff" stroke="#bf4520" stroke-width="2"/>
     <rect x="8" y="8" width="164" height="18" rx="3" fill="rgba(191,69,32,0.10)"/>
-    <text x="90" y="21" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" font-weight="700" text-anchor="middle">OVERRIDE A: ZERO-TOL</text>
-    <text x="90" y="40" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="700" text-anchor="middle">SCRAP · CRITICAL</text>
-    <text x="90" y="53" fill="#5a6580" font-size="9" font-family="'Geist', sans-serif" text-anchor="middle">Max Allowed: 0 px</text>
+    <text x="90" y="21" fill="#bf4520" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="700" text-anchor="middle">OVERRIDE A: ZERO-TOL</text>
+    <text x="90" y="40" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" text-anchor="middle">SCRAP · CRITICAL</text>
+    <text x="90" y="53" fill="#5a6580" font-size="9" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Max Allowed: 0 px</text>
   </g>
 
   <!-- 4. Step 2: Spec Lookup -->
   <rect x="420" y="325" width="240" height="50" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
-  <text x="540" y="346" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Query IPC-A-600 Table</text>
-  <text x="540" y="362" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="middle">Class 2 / Class 3 max_allowed_px</text>
+  <text x="540" y="346" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">Look up pixel-area limit</text>
+  <text x="540" y="362" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" text-anchor="middle">Class 2 / Class 3 max_allowed_px</text>
 
   <!-- 5. Diamond 2: Area Limit Comparison -->
   <polygon points="540,410 650,460 540,510 430,460" fill="#ffffff" stroke="#2d3142" stroke-width="1.2"/>
-  <text x="540" y="454" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">area_px &gt;</text>
-  <text x="540" y="470" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">max_allowed_px?</text>
+  <text x="540" y="454" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">area_px &gt;</text>
+  <text x="540" y="470" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">max_allowed_px?</text>
 
   <!-- Node: Rework Decision (Override B) -->
   <g transform="translate(730, 430)">
     <rect width="160" height="60" rx="6" fill="#ffffff" stroke="#4f5d75" stroke-width="1.5"/>
     <rect x="8" y="8" width="144" height="18" rx="3" fill="rgba(79,93,117,0.10)"/>
-    <text x="80" y="21" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" font-weight="700" text-anchor="middle">OVERRIDE B: IPC VIOLATION</text>
-    <text x="80" y="40" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="700" text-anchor="middle">REWORK · HIGH</text>
-    <text x="80" y="53" fill="#5a6580" font-size="9" font-family="'Geist', sans-serif" text-anchor="middle">violates_ipc = True</text>
+    <text x="80" y="21" fill="#4f5d75" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="700" text-anchor="middle">OVERRIDE B: IPC VIOLATION</text>
+    <text x="80" y="40" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" text-anchor="middle">REWORK · HIGH</text>
+    <text x="80" y="53" fill="#5a6580" font-size="9" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">violates_ipc = True</text>
   </g>
 
   <!-- Node: Pass Decision (Happy Path) -->
   <g transform="translate(440, 580)">
     <rect width="200" height="44" rx="22" fill="#ffffff" stroke="#2d3142" stroke-width="1.5"/>
-    <text x="100" y="26" fill="#2d3142" font-size="12" font-family="'Geist', sans-serif" font-weight="700" text-anchor="middle">PASS · LOW SEVERITY</text>
-    <text x="100" y="38" fill="#5a6580" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Within Conductor Spec</text>
+    <text x="100" y="26" fill="#2d3142" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" text-anchor="middle">PASS · LOW</text>
+    <text x="100" y="38" fill="#5a6580" font-size="9" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" text-anchor="middle">Within area limit</text>
   </g>
 
   <!-- 6. Diamond 3: Batch Drift Check -->
   <polygon points="540,620 620,650 540,680 460,650" fill="#ffffff" stroke="#2d3142" stroke-width="1.2"/>
-  <text x="540" y="646" fill="#2d3142" font-size="11" font-family="'Geist', sans-serif" font-weight="600" text-anchor="middle">Batch Count</text>
-  <text x="540" y="659" fill="#bf4520" font-size="11" font-family="'Geist', sans-serif" font-weight="700" text-anchor="middle">N &gt;= 3?</text>
+  <text x="540" y="646" fill="#2d3142" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="600" text-anchor="middle">Batch Count</text>
+  <text x="540" y="659" fill="#bf4520" font-size="11" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" text-anchor="middle">N &gt;= 3?</text>
 
   <!-- Node: Emergency Line Halt (Override C) -->
   <g transform="translate(750, 620)">
     <rect width="200" height="60" rx="6" fill="#ffffff" stroke="#bf4520" stroke-width="2"/>
     <rect x="8" y="8" width="184" height="18" rx="3" fill="rgba(191,69,32,0.15)"/>
-    <text x="100" y="21" fill="#bf4520" font-size="10" font-family="'Geist Mono', monospace" font-weight="700" text-anchor="middle">OVERRIDE C: LINE HALT</text>
-    <text x="100" y="41" fill="#bf4520" font-size="12" font-family="'Geist', sans-serif" font-weight="800" text-anchor="middle">HALT PRODUCTION LINE</text>
-    <text x="100" y="54" fill="#5a6580" font-size="9" font-family="'Geist', sans-serif" text-anchor="middle">Interlock SMT Pick-and-Place</text>
+    <text x="100" y="21" fill="#bf4520" font-size="10" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="700" text-anchor="middle">OVERRIDE C: LINE HALT</text>
+    <text x="100" y="41" fill="#bf4520" font-size="12" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="800" text-anchor="middle">halt_production_line</text>
+    <text x="100" y="54" fill="#5a6580" font-size="9" font-family="'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">sets halt_production_line</text>
   </g>
 </svg>

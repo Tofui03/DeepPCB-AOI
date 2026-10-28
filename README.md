@@ -2,7 +2,7 @@
 
 Bare-board optical inspection for the six defect classes in the [DeepPCB](https://github.com/tangsanli5201/DeepPCB) dataset (Tang, He, Huang, and Yang, 2019). A template image is compared with a test image. The difference is turned into boxes, each box is checked against a pixel-area limit, and a short rule set can override the final disposition.
 
-The checked-in ONNX file is a fixed difference graph, and the class label is a geometry heuristic. There is no trained checkpoint and no accuracy table in this repo. Tests check that Stage 1 stays under 15 ms. That budget is not a measured frames-per-second claim.
+The checked-in ONNX file is a fixed difference graph, and the class label is a geometry heuristic. There is no trained checkpoint and no accuracy table in this repo. Tests gate Stage 1 at 15 ms mean. On an Intel Xeon, Stage 1 averages ~0.79 ms on the synthetic pair.
 
 ![Template, test image with detector boxes, and the difference map for one DeepPCB pair.](docs/inspect-loop.gif)
 
@@ -21,16 +21,16 @@ DeepPCB labels use ids 1–6 in that order. Images are 640×640.
 
 ## Pipeline
 
-1. **Detect.** `core/vision` resizes nothing (inputs must already be 640×640), runs the ONNX graph, and groups high-scoring cells with connected components. Class comes from the sign of `template - test` (missing copper vs extra copper), plus area, aspect ratio, and fill. Non-maximum suppression drops overlaps. No boxes means `disposition = PASS` and stages 2–4 do not run.
+1. **Detect.** `core/vision` expects 640×640 inputs and does not resize. It runs the ONNX graph and groups high-scoring cells with connected components. Class comes from the sign of `template - test` (missing copper vs extra copper), plus area, aspect ratio, and fill. Non-maximum suppression drops overlaps. No boxes means `disposition = PASS` and stages 2–4 do not run.
 2. **Rules and batch history.** `core/tools` compares box area with the table below and increments a SQLite count for `(batch_id, defect_class)`.
 3. **Optional model triage.** If a callable is configured, its output must validate as `InspectionDecision`. It is tried at most three times (`MAX_VLM_RETRIES = 2`). Anything else falls back to the rule engine. The default server does not call an external model. The callable does not edit box coordinates.
 4. **Overrides** in `core/agent/guardrails.py`. Open and Short cannot be PASS (forced to SCRAP / CRITICAL). An over-limit box cannot be PASS. The third occurrence of the same class in a batch sets `halt_production_line`.
 
 ![Pipeline diagram](docs/architecture/system-architecture.svg)
 
-The editable source is `docs/architecture/system-architecture.excalidraw`. `docs/architecture/system-architecture.png` is an older export and still shows a 512×512 caption and a 263 FPS figure. Those numbers are not what the code does. Use the SVG.
+The editable source is `docs/architecture/system-architecture.excalidraw`.
 
-`ONNXPCBDetector.benchmark` times Stage 1 `detect` on one synthetic 640×640 pair (two dark rectangles) and returns `mean_ms`, `p50_ms`, `p95_ms`, `p99_ms`, and `fps`. Tests and `sla_met` pass when `mean_ms < 15`. That call does not time fast-path, NMS, SQLite, guardrails, or a VLM on their own, and this repo has no CUDA or TensorRT benchmark.
+`ONNXPCBDetector.benchmark` times Stage 1 `detect` on one synthetic 640×640 pair (two dark rectangles) and returns `mean_ms`, `p50_ms`, `p95_ms`, `p99_ms`, and `fps`. Tests and `sla_met` pass when `mean_ms < 15`. That call times `detect` as a whole. It does not separately time the fast path, non-maximum suppression, SQLite, guardrails, or a VLM. This repo has no CUDA or TensorRT benchmark.
 
 ## Area limits
 
@@ -48,6 +48,10 @@ The editable source is `docs/architecture/system-architecture.excalidraw`. `docs
 `check_ipc_rule(..., relative_width_pct=)` can also fail a non-fatal class above 25% (Class 2) or 20% (Class 3). The live pipeline calls `evaluate_detection_ipc`, which does not pass that argument, so decisions use area only.
 
 Batch halt threshold: 3 occurrences of the same class (`BATCH_HALT_THRESHOLD`).
+
+One detected box takes the path below.
+
+![Decision flow for one detected box](docs/architecture/ipc-decision-flowchart.svg)
 
 ## ONNX file
 
@@ -129,5 +133,4 @@ Coverage is the schema, the area table, batch counts, guardrail overrides (inclu
 - Class labels are thresholds in `_classify_defect_morphology`, not a learned classifier. A different `score_threshold` changes which blobs survive.
 - The clause strings are names for the pixel table above.
 - No language model is configured. `simulate_rogue_vlm` sends a fixed PASS payload so the override can be seen.
-- The console is one HTML file with rounded controls, a purple accent, emoji on a few buttons, and placeholder line names.
 - The console, dataset, and batch database resolve from the repo root: `web/index.html`, `data/DeepPCB/PCBData`, and `data/batch_telemetry.db`.
