@@ -291,15 +291,27 @@ def run_evaluation(
     return summary
 
 
-def make_onnx_method_a_detector():
+def onnx_providers_for_device(device: str = "0") -> list[str]:
+    """Map the CLI ``--device`` value to an ONNX Runtime provider priority list."""
+    if str(device).strip().lower() == "cpu":
+        return ["CPUExecutionProvider"]
+    return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+
+
+def make_onnx_method_a_detector(device: str = "0"):
+    """Build the Method A inference fn.
+
+    Returns ``(infer_fn, execution_provider)`` where ``execution_provider`` is the
+    provider ONNX Runtime actually selected (not just the requested device).
+    """
     from core.vision.onnx_detector import ONNXPCBDetector
-    detector = ONNXPCBDetector(score_threshold=28.0)
+    detector = ONNXPCBDetector(score_threshold=28.0, providers=onnx_providers_for_device(device))
 
     def _infer(temp_img: np.ndarray, test_img: np.ndarray) -> list[Box]:
         detections, _ = detector.detect(temp_img, test_img)
         return [Box(d.x1, d.y1, d.x2, d.y2, d.defect_class, d.confidence) for d in detections]
 
-    return _infer
+    return _infer, detector.execution_provider
 
 
 def make_yolo_detector(weights_path: Path, mode: str = "b", conf: float = 0.25, device: str = "0"):
@@ -399,10 +411,11 @@ def main():
         print("\n" + "=" * 50)
         print("Evaluating Method A (Differential ONNX Detector Baseline)...")
         print("=" * 50)
-        fn_a = make_onnx_method_a_detector()
+        fn_a, ep_a = make_onnx_method_a_detector(args.device)
+        print(f"Method A ONNX Runtime execution provider: {ep_a}")
         bad_dir = args.bad_cases_dir / "method_a"
         res_a = run_evaluation(fn_a, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
-        res_a["metadata"] = metadata
+        res_a["metadata"] = {**metadata, "execution_provider": ep_a}
         all_results["Method_A_Differential_ONNX"] = res_a
 
     if args.method in ["b", "all"] and args.weights_b:
@@ -412,7 +425,7 @@ def main():
         fn_b = make_yolo_detector(args.weights_b, mode="b", conf=args.conf, device=args.device)
         bad_dir = args.bad_cases_dir / "method_b"
         res_b = run_evaluation(fn_b, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
-        res_b["metadata"] = metadata
+        res_b["metadata"] = {**metadata, "yolo_device": args.device}
         all_results["Method_B_YOLOv8n_SingleImage"] = res_b
 
     if args.method in ["c", "all"] and args.weights_c:
@@ -422,7 +435,7 @@ def main():
         fn_c = make_yolo_detector(args.weights_c, mode="c", conf=args.conf, device=args.device)
         bad_dir = args.bad_cases_dir / "method_c"
         res_c = run_evaluation(fn_c, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
-        res_c["metadata"] = metadata
+        res_c["metadata"] = {**metadata, "yolo_device": args.device}
         all_results["Method_C_YOLOv8n_3Channel"] = res_c
 
     # Save summary json

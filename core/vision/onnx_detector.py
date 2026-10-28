@@ -209,7 +209,13 @@ class ONNXPCBDetector:
         score_threshold: float = 28.0,
         iou_threshold: float = 0.45,
         min_Box_px: int = 8,
+        providers: list[str] | None = None,
     ) -> None:
+        """Load (or synthesize) the difference graph and start an ONNX Runtime session.
+
+        ``providers`` overrides the execution-provider priority list. ``None`` keeps
+        the default ``PROVIDER_FALLBACK_ORDER`` (CUDA first, then CPU).
+        """
         self.model_path = Path(model_path)
         if not self.model_path.is_file():
             build_differential_onnx_model(self.model_path)
@@ -228,7 +234,7 @@ class ONNXPCBDetector:
             self.session = ort.InferenceSession(
                 str(self.model_path),
                 sess_options=sess_options,
-                providers=PROVIDER_FALLBACK_ORDER,
+                providers=list(providers) if providers else PROVIDER_FALLBACK_ORDER,
             )
 
         active_providers = self.session.get_providers()
