@@ -199,6 +199,12 @@ class TestONNXDetector:
         assert all(isinstance(d, BoundingBoxDetection) for d in detections)
         assert latency_ms < 15.0, f"Stage 1 latency {latency_ms:.2f}ms exceeded 15ms SLA"
 
+    def test_onnx_detector_honors_explicit_cpu_provider(self) -> None:
+        """Passing providers=["CPUExecutionProvider"] must pin the session to CPU."""
+        detector = ONNXPCBDetector(providers=["CPUExecutionProvider"])
+        assert detector.execution_provider == "CPUExecutionProvider"
+        assert detector.session.get_providers() == ["CPUExecutionProvider"]
+
     def test_rule2_zero_token_fast_path_bypass_on_identical_board(self) -> None:
         """Identical template and test images return no boxes and fast_path_pass in under 15 ms."""
         detector = ONNXPCBDetector()

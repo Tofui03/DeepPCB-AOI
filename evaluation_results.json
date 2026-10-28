@@ -2,10 +2,10 @@
   "Method_A_Differential_ONNX": {
     "num_samples": 500,
     "latency_ms": {
-      "mean": 6.41,
-      "p50": 6.02,
-      "p95": 10.01,
-      "fps": 156.1
+      "mean": 3.85,
+      "p50": 3.6,
+      "p95": 5.72,
+      "fps": 260.0
     },
     "iou_0.33": {
       "class_aware": {
@@ -112,15 +112,50 @@
           "gt_count": 470
         }
       }
+    },
+    "metadata": {
+      "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+      "target_device": "0",
+      "device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "python_version": "3.12.16"
+    },
+    "latency_gpu_ms": {
+      "mean": 3.85,
+      "p50": 3.6,
+      "p95": 5.72,
+      "fps": 260.0
+    },
+    "latency_cpu_ms": {
+      "mean": 3.64,
+      "p50": 3.43,
+      "p95": 5.65,
+      "fps": 274.8
+    },
+    "device_info": {
+      "gpu": {
+        "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+        "target_device": "0",
+        "device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python_version": "3.12.16"
+      },
+      "cpu": {
+        "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+        "target_device": "cpu",
+        "device_name": "Intel(R) Core(TM) Ultra 7 255HX",
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python_version": "3.12.16"
+      }
     }
   },
   "Method_B_YOLOv8n_SingleImage": {
     "num_samples": 500,
     "latency_ms": {
-      "mean": 24.72,
-      "p50": 10.38,
-      "p95": 15.36,
-      "fps": 40.4
+      "mean": 15.59,
+      "p50": 9.2,
+      "p95": 11.98,
+      "fps": 64.1
     },
     "iou_0.33": {
       "class_aware": {
@@ -227,15 +262,50 @@
           "gt_count": 470
         }
       }
+    },
+    "metadata": {
+      "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+      "target_device": "0",
+      "device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "python_version": "3.12.16"
+    },
+    "latency_gpu_ms": {
+      "mean": 15.59,
+      "p50": 9.2,
+      "p95": 11.98,
+      "fps": 64.1
+    },
+    "latency_cpu_ms": {
+      "mean": 37.01,
+      "p50": 33.6,
+      "p95": 40.53,
+      "fps": 27.0
+    },
+    "device_info": {
+      "gpu": {
+        "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+        "target_device": "0",
+        "device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python_version": "3.12.16"
+      },
+      "cpu": {
+        "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+        "target_device": "cpu",
+        "device_name": "Intel(R) Core(TM) Ultra 7 255HX",
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python_version": "3.12.16"
+      }
     }
   },
   "Method_C_YOLOv8n_3Channel": {
     "num_samples": 500,
     "latency_ms": {
-      "mean": 9.98,
-      "p50": 9.7,
-      "p95": 11.24,
-      "fps": 100.2
+      "mean": 9.95,
+      "p50": 9.34,
+      "p95": 11.61,
+      "fps": 100.5
     },
     "iou_0.33": {
       "class_aware": {
@@ -341,6 +411,41 @@
           "f1": 0.9611,
           "gt_count": 470
         }
+      }
+    },
+    "metadata": {
+      "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+      "target_device": "0",
+      "device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "python_version": "3.12.16"
+    },
+    "latency_gpu_ms": {
+      "mean": 9.95,
+      "p50": 9.34,
+      "p95": 11.61,
+      "fps": 100.5
+    },
+    "latency_cpu_ms": {
+      "mean": 34.13,
+      "p50": 33.79,
+      "p95": 38.35,
+      "fps": 29.3
+    },
+    "device_info": {
+      "gpu": {
+        "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+        "target_device": "0",
+        "device_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python_version": "3.12.16"
+      },
+      "cpu": {
+        "git_commit": "6f4bcfeae6ffca90da9ed28c52c7d5d06b86669f",
+        "target_device": "cpu",
+        "device_name": "Intel(R) Core(TM) Ultra 7 255HX",
+        "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python_version": "3.12.16"
       }
     }
   }
