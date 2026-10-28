@@ -236,9 +236,11 @@ class ONNXPCBDetector:
             active_providers[0] if active_providers else "CPUExecutionProvider"
         )
 
-        # Warm up session once at initialization so first production frame is hot
-        dummy = np.zeros((1, 1, BOARD_DIM_PX, BOARD_DIM_PX), dtype=np.float32)
-        self.session.run(None, {"template": dummy, "test": dummy})
+        # Warm up full Stage 1 pipeline (ONNX session + OpenCV connected components + NMS)
+        dummy_tpl = np.full((BOARD_DIM_PX, BOARD_DIM_PX), 255, dtype=np.uint8)
+        dummy_tst = dummy_tpl.copy()
+        dummy_tst[64:96, 64:96] = 0
+        self.detect(dummy_tpl, dummy_tst)
 
     @staticmethod
     def _classify_defect_morphology(
