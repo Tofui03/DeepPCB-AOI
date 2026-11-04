@@ -24,6 +24,7 @@ from core.data.deeppcb_loader import (
 from core.tools.batch_db import BatchTelemetryStore
 from core.vision.diff_preprocess import compute_differential_map
 from core.vision.onnx_detector import ONNXPCBDetector
+from core.vision.yolo_detector import DEFAULT_YOLO_ONNX_PATH, YOLOv8PCBDetector
 
 WEB_INDEX_PATH = Path(__file__).resolve().parents[1] / "web" / "index.html"
 
@@ -38,11 +39,13 @@ app = FastAPI(
 )
 
 # Mock boards are test-only. pytest sets DEEPPCB_ALLOW_MOCK; the server does not.
-dataset = DeepPCBDataset(allow_mock=os.environ.get("DEEPPCB_ALLOW_MOCK") == "1")
+_IS_TEST_ENV = os.environ.get("DEEPPCB_ALLOW_MOCK") == "1"
+dataset = DeepPCBDataset(allow_mock=_IS_TEST_ENV)
 
-DETECTOR_BACKEND = os.environ.get("DETECTOR_BACKEND", "diff").lower()
-if DETECTOR_BACKEND in ("yolo", "yolov8"):
-    from core.vision.yolo_detector import YOLOv8PCBDetector
+DETECTOR_BACKEND = os.environ.get("DETECTOR_BACKEND", "auto").lower()
+if DETECTOR_BACKEND in ("yolo", "yolov8") or (
+    DETECTOR_BACKEND == "auto" and DEFAULT_YOLO_ONNX_PATH.is_file() and not _IS_TEST_ENV
+):
     detector = YOLOv8PCBDetector()
 else:
     detector = ONNXPCBDetector(score_threshold=145.0)

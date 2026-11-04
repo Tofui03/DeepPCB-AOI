@@ -3,1004 +3,1827 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DeepPCB-AOI | Industrial PCB Defect Discovery &amp; IPC Triage Console</title>
+  <title>DeepPCB-AOI</title>
   <style>
     :root {
-      --bg-page: #f0f2f5;
-      --bg-card: #ffffff;
-      --bg-subtle: #f8fafc;
-      --bg-hover: #f1f5f9;
-      --border-main: #d1d5db;
-      --border-subtle: #e5e7eb;
-      --border-dark: #1f2937;
+      /* Crisp Daylight Tokens (Linear Light & Apple Notes Aesthetic) */
+      --bg-canvas: #F4F5F7;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #F8F9FA;
+      --bg-hover: #F1F3F5;
+      --bg-selected: #EEF2FF;
 
-      --text-main: #111827;
-      --text-muted: #4b5563;
-      --text-light: #6b7280;
+      --border-hairline: #E6E8EC;
+      --border-strong: #D0D5DD;
 
-      --brand-dark: #111827;
-      --brand-purple: #6d28d9;
-      --brand-purple-light: #f5f3ff;
-      --status-pass: #059669;
-      --status-pass-bg: #ecfdf5;
-      --status-rework: #d97706;
-      --status-rework-bg: #fffbeb;
-      --status-scrap: #dc2626;
-      --status-scrap-bg: #fef2f2;
-      --status-info: #2563eb;
-      --status-info-bg: #eff6ff;
+      --text-primary: #111827;
+      --text-secondary: #4B5563;
+      --text-muted: #8E95A2;
 
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      --font-mono: "JetBrains Mono", "SF Mono", Consolas, Menlo, monospace;
+      --accent-primary: #111827;
+      --accent-focus: #2563EB;
+
+      /* Semantic Verdicts */
+      --pass-fg: #059669;
+      --pass-bg: #ECFDF5;
+      --pass-border: #A7F3D0;
+
+      --rework-fg: #D97706;
+      --rework-bg: #FFFBEB;
+      --rework-border: #FDE68A;
+
+      --scrap-fg: #DC2626;
+      --scrap-bg: #FEF2F2;
+      --scrap-border: #FECACA;
+
+      --override-fg: #6D28D9;
+      --override-bg: #F5F3FF;
+      --override-border: #DDD6FE;
+
+      /* 6 Canonical Defect Class Colors */
+      --cls-open: #E11D48;
+      --cls-short: #EA580C;
+      --cls-mousebite: #CA8A04;
+      --cls-spur: #0284C7;
+      --cls-copper: #7C3AED;
+      --cls-pinhole: #059669;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", Consolas, Menlo, monospace;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    body {
+    html, body {
+      height: 100%;
+      background: var(--bg-surface);
+      color: var(--text-primary);
       font-family: var(--font-sans);
-      background-color: var(--bg-page);
-      color: var(--text-main);
-      line-height: 1.45;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .top-navbar {
-      background: var(--brand-dark);
-      color: #ffffff;
-      padding: 0 1.25rem;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-    }
-    .brand-logo {
-      font-size: 0.95rem;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-    .brand-tag {
-      background: var(--brand-purple);
-      color: #ffffff;
-      font-size: 0.7rem;
-      padding: 0.15rem 0.4rem;
-      border-radius: 3px;
-      font-weight: 700;
-    }
-    .product-select {
-      background: #1f2937;
-      color: #e5e7eb;
-      border: 1px solid #374151;
-      font-size: 0.8rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 4px;
-    }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      height: 100%;
-    }
-    .nav-item {
-      color: #9ca3af;
-      text-decoration: none;
-      font-size: 0.82rem;
-      font-weight: 600;
-      padding: 0 0.85rem;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      transition: all 120ms;
-    }
-    .nav-item.active {
-      color: #ffffff;
-      background: rgba(255,255,255,0.1);
-      box-shadow: inset 0 -2px 0 var(--brand-purple);
-    }
-    .nav-item:hover { color: #ffffff; }
-
-    .filter-bar {
-      background: #ffffff;
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0.5rem 1.25rem;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      font-size: 0.82rem;
-    }
-    .filter-left, .filter-right {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-    .date-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      padding: 0.3rem 0.65rem;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 0.8rem;
-      color: #374151;
-    }
-    .btn-filter {
-      background: var(--brand-purple);
-      color: #ffffff;
-      border: none;
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      transition: background 120ms;
-    }
-    .btn-filter:hover { background: #5b21b6; }
-    .btn-outline {
-      background: #ffffff;
-      color: #374151;
-      border: 1px solid var(--border-main);
-      padding: 0.35rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-outline:hover { background: var(--bg-subtle); }
-
-    .workspace {
-      flex: 1;
-      max-width: 1560px;
-      width: 100%;
-      margin: 1rem auto;
-      padding: 0 1.25rem 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .panel-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-main);
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      font-size: 13px;
+      line-height: 1.4;
       overflow: hidden;
-    }
-    .panel-header {
-      padding: 0.9rem 1.25rem;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      background: #ffffff;
-    }
-    .panel-title-group {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .panel-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .badge-pill {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.2rem 0.55rem;
-      border-radius: 9999px;
-    }
-    .badge-purple { background: var(--brand-purple-light); color: var(--brand-purple); border: 1px solid #ddd6fe; }
-    .badge-green { background: var(--status-pass-bg); color: var(--status-pass); border: 1px solid #a7f3d0; }
-    .badge-red { background: var(--status-scrap-bg); color: var(--status-scrap); border: 1px solid #fecaca; }
-
-    .zone-grid {
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      min-height: 480px;
-    }
-    @media (max-width: 1024px) {
-      .zone-grid { grid-template-columns: 1fr; }
-    }
-
-    .zone-sidebar {
-      border-right: 1px solid var(--border-subtle);
-      padding: 1.25rem;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      font-size: 0.85rem;
-    }
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .group-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-    }
-    .radio-row, .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
       user-select: none;
-      font-size: 0.84rem;
+      -webkit-font-smoothing: antialiased;
     }
-    .radio-row input, .checkbox-row input { cursor: pointer; }
-    .badge-count {
-      font-size: 0.75rem;
-      color: var(--text-light);
-      margin-left: auto;
+
+    .mono {
       font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
     }
 
-    .progress-box {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
+    /* App Shell: Top Bar + Main Split + Bottom Timeline Bar */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Line Halt Alert Strip */
+    .halt-banner {
+      display: none;
+      background: var(--scrap-bg);
+      border-bottom: 1px solid var(--scrap-border);
+      color: #991B1B;
+      padding: 6px 16px;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .halt-banner.active {
+      display: flex;
+    }
+    .halt-badge {
+      background: var(--scrap-fg);
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+
+    /* 44px Top Navigation & Control Bar */
+    .top-bar {
+      height: 44px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .bar-cluster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+
+    .sep {
+      width: 1px;
+      height: 16px;
+      background: var(--border-hairline);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    select.ui-select,
+    input.ui-input {
+      height: 28px;
+      padding: 0 8px;
       border-radius: 6px;
-      padding: 0.85rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color 120ms, background 120ms;
     }
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      font-weight: 600;
-      font-size: 0.8rem;
+    select.ui-select:hover,
+    input.ui-input:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-surface);
     }
-    .progress-bar {
-      height: 7px;
-      background: #e2e8f0;
-      border-radius: 9999px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: #3b82f6;
-      width: 40%;
-      border-radius: 9999px;
-      transition: width 300ms ease;
-    }
-    .progress-desc {
-      font-size: 0.72rem;
-      color: var(--text-light);
-      line-height: 1.35;
+    select.ui-select:focus,
+    input.ui-input:focus {
+      border-color: var(--accent-focus);
+      background: var(--bg-surface);
     }
 
-    .zone-stage {
-      padding: 1.25rem;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .stage-action-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .sample-picker {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-    .sample-picker select {
-      padding: 0.35rem 0.7rem;
-      border: 1px solid var(--border-main);
-      border-radius: 4px;
-      font-size: 0.82rem;
-      background: #ffffff;
-      font-weight: 600;
-    }
-    .btn-action-primary {
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      padding: 0.45rem 1rem;
-      border-radius: 4px;
-      font-size: 0.84rem;
-      font-weight: 600;
+    .ui-btn {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-      transition: background 120ms;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background 100ms, border-color 100ms, opacity 100ms;
     }
-    .btn-action-primary:hover { background: #1d4ed8; }
+    .ui-btn:hover:not(:disabled) {
+      background: var(--bg-hover);
+      border-color: var(--border-strong);
+    }
+    .ui-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .ui-btn.active {
+      background: var(--bg-selected);
+      border-color: #BFDBFE;
+      color: var(--accent-focus);
+      font-weight: 600;
+    }
+    .ui-btn-primary {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #FFFFFF;
+      font-weight: 600;
+      padding: 0 12px;
+    }
+    .ui-btn-primary:hover:not(:disabled) {
+      background: #1F2937;
+      border-color: #1F2937;
+    }
 
-    .viewport-deck {
+    /* Segmented Pill Control */
+    .segmented {
+      display: inline-flex;
+      background: var(--bg-canvas);
+      padding: 2px;
+      border-radius: 7px;
+      border: 1px solid var(--border-hairline);
+    }
+    .seg-item {
+      height: 24px;
+      padding: 0 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 100ms;
+    }
+    .seg-item:hover {
+      color: var(--text-primary);
+    }
+    .seg-item.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Main Split Area: Center Canvas + 340px Right Inspector */
+    .main-area {
+      flex: 1;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-    }
-    .pcb-view-box {
-      border: 1px solid var(--border-main);
-      border-radius: 6px;
-      background: #ffffff;
+      grid-template-columns: 1fr 340px;
+      min-height: 0;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
-    .pcb-view-header {
-      background: var(--bg-subtle);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0.5rem 0.75rem;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .pcb-canvas-wrapper {
+
+    /* Center Canvas Stage */
+    .canvas-stage {
       position: relative;
-      background: #0f172a;
-      aspect-ratio: 1 / 1;
+      background: var(--bg-canvas);
+      background-image: radial-gradient(#D5D9E0 1px, transparent 1px);
+      background-size: 20px 20px;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: grab;
+    }
+    .canvas-stage[data-state="PANNING"] {
+      cursor: grabbing;
+    }
+    .canvas-stage[data-state="HOVER_BOX"],
+    .canvas-stage[data-state="SELECTED_LOCKED"] {
+      cursor: crosshair;
+    }
+    .canvas-stage[data-state="LOADING"] {
+      cursor: progress;
+    }
+
+    /* Floating Top Layer Switcher */
+    .floating-top-bar {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-hairline);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Floating Bottom Canvas Controls */
+    .floating-bottom-left {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 20;
+      display: flex;
+      gap: 6px;
+    }
+    .floating-bottom-right {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-hairline);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
       overflow: hidden;
     }
-    .pcb-canvas-wrapper img {
+    .zoom-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .zoom-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .zoom-label {
+      padding: 0 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-left: 1px solid var(--border-hairline);
+      border-right: 1px solid var(--border-hairline);
+      line-height: 26px;
+    }
+
+    /* 640x640 Board Surface Card */
+    .board-frame {
+      position: relative;
+      width: 580px;
+      height: 580px;
+      background: #FFFFFF;
+      border: 1px solid var(--border-strong);
+      border-radius: 4px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+      transform-origin: center center;
+      flex-shrink: 0;
+    }
+    .board-frame img.board-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      image-rendering: pixelated;
+      pointer-events: none;
+      display: block;
+    }
+    .board-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .bbox-group {
+      cursor: pointer;
+    }
+    .bbox-rect {
+      vector-effect: non-scaling-stroke;
+      transition: stroke-width 80ms, fill-opacity 80ms;
+    }
+    .bbox-group:hover .bbox-rect,
+    .bbox-group.hovered .bbox-rect {
+      stroke-width: 2.5px;
+      fill-opacity: 0.25;
+    }
+    .bbox-group.selected .bbox-rect {
+      stroke-width: 3px;
+      fill-opacity: 0.28;
+    }
+
+    /* Tri-Split Comparison View */
+    .tri-split-grid {
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: 56px 20px 48px;
+      gap: 14px;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: center;
+      max-width: 1280px;
+    }
+    .tri-split-grid.active {
+      display: grid;
+    }
+    .tri-pane {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+    .tri-pane-header {
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border-hairline);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+    }
+    .tri-pane-body {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #FFFFFF;
+    }
+    .tri-pane-body img,
+    .tri-pane-body svg {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
       image-rendering: pixelated;
     }
-    .svg-overlay {
+
+    /* Subtle Loading Pill Overlay */
+    .loading-pill {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: none;
+      align-items: center;
+      gap: 8px;
     }
-    .pcb-view-footer {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.75rem;
-      font-style: italic;
-      color: var(--text-light);
-      background: #ffffff;
-      border-top: 1px solid var(--border-subtle);
+    .loading-pill.active {
+      display: inline-flex;
+    }
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--text-primary);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
-    .drilldown-header {
-      padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid var(--border-subtle);
+    /* Right Inspector Panel */
+    .inspector-panel {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Row 1: Verdict & Core Telemetry Strip */
+    .verdict-bar {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .verdict-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 5px;
+    }
+    .verdict-PASS { background: var(--pass-bg); color: var(--pass-fg); border: 1px solid var(--pass-border); }
+    .verdict-REWORK { background: var(--rework-bg); color: var(--rework-fg); border: 1px solid var(--rework-border); }
+    .verdict-SCRAP { background: var(--scrap-bg); color: var(--scrap-fg); border: 1px solid var(--scrap-border); }
+    .verdict-STAGE1 { background: var(--bg-subtle); color: var(--text-secondary); border: 1px solid var(--border-hairline); }
+
+    .telemetry-nums {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Row 2: Compact Filter Bar (Confidence + 6 Class Dots) */
+    .filter-section {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .conf-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .conf-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .class-pills {
       display: flex;
       flex-wrap: wrap;
+      gap: 5px;
+    }
+    .cls-tag {
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
+      gap: 5px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 5px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-surface);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: opacity 100ms, background 100ms;
     }
-    .region-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 0.85rem;
-      font-weight: 700;
+    .cls-tag:hover {
+      background: var(--bg-hover);
     }
-    .region-status {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-light);
-    }
-    .anomaly-ranking-bar {
-      background: #fffbeb;
-      border-bottom: 1px solid #fef3c7;
-      padding: 0.5rem 1.25rem;
-      font-size: 0.8rem;
-      color: #92400e;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 600;
-    }
-
-    .units-row {
-      padding: 1.25rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 1rem;
+    .cls-tag.off {
+      opacity: 0.35;
       background: var(--bg-subtle);
     }
-    .unit-card {
-      background: #ffffff;
-      border: 1px solid var(--border-main);
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-      transition: transform 120ms, box-shadow 120ms;
+    .cls-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
     }
-    .unit-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.06);
-    }
-    .unit-card-badge {
-      padding: 0.45rem 0.65rem;
-      font-size: 0.75rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-    .badge-normal { background: #ecfdf5; color: #065f46; }
-    .badge-scrap { background: #fef2f2; color: #991b1b; }
-    .badge-rework { background: #fffbeb; color: #92400e; }
-    .badge-override { background: #f5f3ff; color: #5b21b6; }
-
-    .unit-crop-view {
-      position: relative;
-      background: #111827;
-      height: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .unit-crop-view img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .unit-details {
-      padding: 0.65rem;
-      font-size: 0.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      background: #ffffff;
-    }
-    .unit-prop {
-      display: flex;
-      justify-content: space-between;
-      color: var(--text-muted);
-    }
-    .unit-val {
-      font-weight: 700;
-      color: var(--text-main);
+    .cls-num {
       font-family: var(--font-mono);
-    }
-
-    .trace-section {
-      padding: 1.25rem;
-      background: #ffffff;
-      border-top: 1px solid var(--border-subtle);
-    }
-    .trace-timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-top: 0.75rem;
-    }
-    .trace-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.85rem;
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      font-size: 0.82rem;
-    }
-    .step-circle {
-      width: 22px; height: 22px;
-      border-radius: 9999px;
-      background: #2563eb;
-      color: #ffffff;
-      font-size: 0.7rem;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-    .step-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-    .step-title {
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .step-desc {
       color: var(--text-muted);
-      font-size: 0.78rem;
+      font-size: 10px;
     }
 
-    .halt-banner {
-      display: none;
-      background: #fee2e2;
-      border: 2px solid #ef4444;
-      color: #991b1b;
-      padding: 0.75rem 1.25rem;
-      font-weight: 800;
-      font-size: 0.9rem;
+    /* Row 3: Clean Hairline Detection List */
+    .detections-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .det-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      cursor: pointer;
+      transition: background 80ms;
+    }
+    .det-item:hover,
+    .det-item.hovered {
+      background: var(--bg-hover);
+    }
+    .det-item.selected {
+      background: var(--bg-selected);
+    }
+
+    .det-row-main {
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
+      gap: 8px;
     }
-    .halt-banner.active { display: flex; }
+    .det-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .det-sub {
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Progressive Disclosure Details inside Selected Item */
+    .det-expanded {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-hairline);
+      gap: 10px;
+      flex-direction: column;
+    }
+    .det-item.selected .det-expanded {
+      display: flex;
+    }
+
+    .roi-box-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .roi-thumb {
+      width: 68px;
+      height: 68px;
+      border-radius: 4px;
+      border: 1px solid var(--border-strong);
+      background: #FFFFFF;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .roi-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      line-height: 1.35;
+    }
+    .override-note {
+      background: var(--override-bg);
+      border: 1px solid var(--override-border);
+      color: var(--override-fg);
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      padding: 36px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .empty-state strong {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    /* Bottom 36px Single-Line Timeline Track + Collapsible Drawer */
+    .bottom-bar {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-hairline);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .timeline-strip {
+      height: 36px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .stages-track {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .stage-pill {
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .stage-pill:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .stage-pill.active {
+      background: var(--bg-subtle);
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .stage-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border-strong);
+    }
+    .stage-dot.done { background: var(--pass-fg); }
+    .stage-dot.override { background: var(--override-fg); }
+
+    .stage-arrow {
+      color: var(--border-strong);
+      font-size: 11px;
+    }
+
+    .trace-drawer {
+      display: none;
+      height: 170px;
+      border-top: 1px solid var(--border-hairline);
+      background: var(--bg-subtle);
+      padding: 8px 14px;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .trace-drawer.open {
+      display: flex;
+    }
+    .trace-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .trace-pre {
+      flex: 1;
+      overflow: auto;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: 4px;
+      padding: 8px;
+      white-space: pre-wrap;
+    }
+
+    /* Clean Modal Dialog */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.25);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      border-radius: 8px;
+      width: 380px;
+      padding: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    @media (max-width: 960px) {
+      html, body { overflow: auto; }
+      .app-shell { height: auto; min-height: 100vh; }
+      .top-bar { flex-wrap: wrap; height: auto; padding: 8px 12px; }
+      .main-area { grid-template-columns: 1fr; }
+      .canvas-stage { min-height: 480px; }
+    }
   </style>
 </head>
-<body>
+<body data-fsm-state="IDLE" data-disposition="STAGE1">
 
-  <nav class="top-navbar">
-    <div class="nav-brand">
-      <div class="brand-logo">
-        <span>DeepPCB-AOI</span>
-      </div>
-      <select class="product-select" id="lineSelect" aria-label="Station">
-        <option>Bare-board station</option>
-      </select>
-    </div>
-    <div class="nav-links">
-      <a href="#" class="nav-item">Overview</a>
-      <a href="#" class="nav-item active">Discover</a>
-      <a href="#" class="nav-item">Monitor</a>
-      <a href="#" class="nav-item">Units</a>
-    </div>
-  </nav>
+<div class="app-shell">
 
-  <div class="filter-bar">
-    <div class="filter-left">
-      <div class="date-badge">
-        <span id="dateDisplay"></span>
-      </div>
-      <button class="btn-filter" id="btnRunTriage">Run 4-stage triage</button>
-      <button class="btn-outline" id="btnFastPath">Clean board</button>
-      <button class="btn-outline" id="btnRogueVlm">Guardrail override</button>
+  <!-- Line Halt Alert Banner -->
+  <div class="halt-banner" id="haltBanner" role="alert">
+    <div>
+      <span class="halt-badge">PRODUCTION LINE HALTED</span>
+      <span id="haltReasonText">3+ recurring defects recorded in the same spatial grid cell. Process drift interlock triggered.</span>
     </div>
-    <div class="filter-right">
-      <span style="font-weight: 600; color: var(--text-muted);">Batch:</span>
-      <input type="text" id="batchIdInput" value="BATCH-SMT-01" style="padding: 0.3rem 0.5rem; border: 1px solid var(--border-main); border-radius: 4px; font-size: 0.8rem; width: 120px;" />
-      <button class="btn-outline" id="btnResetBatch">Reset batch</button>
-      <button class="btn-outline" id="btnBenchmark">Benchmark</button>
+    <div style="display:flex; gap:6px;">
+      <button class="ui-btn" id="btnResetFromBanner">Reset Batch &amp; Resume</button>
+      <button class="ui-btn" id="btnDismissHalt">Dismiss</button>
     </div>
   </div>
 
-  <main class="workspace">
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="bar-cluster">
+      <span class="brand-title">DeepPCB-AOI</span>
 
-    <div class="halt-banner" id="haltBanner">
-      <div>
-        <span>PRODUCTION LINE HALTED</span>
-        <span style="font-weight: 500; font-size: 0.8rem; margin-left: 0.5rem;" id="haltReasonText">3+ recurring defects recorded in active batch. Upstream stencil/etching alert triggered.</span>
-      </div>
-      <button class="btn-outline" style="background:#ffffff; color:#991b1b; border-color:#f87171;" id="btnDismissHalt">Release Interlock</button>
+      <select class="ui-select mono" id="groupFilterSelect" aria-label="Group">
+        <option value="">All Groups</option>
+      </select>
+
+      <select class="ui-select mono" id="sampleSelect" aria-label="Sample" style="width: 185px;">
+        <option value="">Loading...</option>
+      </select>
+
+      <select class="ui-select" id="ipcClassSelect" aria-label="IPC Standard">
+        <option value="Class 2">IPC Class 2</option>
+        <option value="Class 3">IPC Class 3</option>
+      </select>
     </div>
 
-    <section class="panel-card">
-      <div class="panel-header">
-        <div class="panel-title-group">
-          <h2 class="panel-title">Board inspection</h2>
-          <span class="badge-pill badge-purple" id="reviewCountBadge">1,500 PCB pairs ready</span>
-          <span class="badge-pill badge-green" id="latencyBadge">ONNX: pending</span>
-          <span class="badge-pill" id="benchmarkReadout" style="display:none; font-family: var(--font-mono); font-size: 0.85rem; background:#111827; color:#f9fafb;"></span>
+    <div class="bar-cluster">
+      <div class="segmented" id="runModeTabs" role="group" aria-label="Execution Mode">
+        <button class="seg-item" id="btnStage1Only" data-mode="stage1">Detect</button>
+        <button class="seg-item active" id="btnRunTriage" data-mode="triage">Triage</button>
+        <button class="seg-item" id="btnFastPath" data-mode="clean">Clean</button>
+        <button class="seg-item" id="btnRogueVlm" data-mode="rogue">Rogue VLM</button>
+      </div>
+
+      <button class="ui-btn ui-btn-primary" id="btnExecuteActiveMode">Run</button>
+
+      <div class="sep"></div>
+
+      <input type="text" class="ui-input mono" id="batchIdInput" value="BATCH-SMT-01" style="width: 112px;" aria-label="Batch ID" />
+      <button class="ui-btn" id="btnResetBatch" title="Reset SQLite batch counts">Reset</button>
+      <button class="ui-btn" id="btnOpenUpload">Upload</button>
+      <button class="ui-btn" id="btnBenchmark">Benchmark</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace: Center Canvas + Right Inspector -->
+  <div class="main-area">
+
+    <!-- Center: Interactive PCB Canvas -->
+    <section class="canvas-stage" id="canvasViewport" data-state="IDLE" aria-label="PCB Inspection Canvas">
+
+      <!-- Floating Top Layer Switcher -->
+      <div class="floating-top-bar" id="layerTabs">
+        <button class="seg-item active" data-layer="test">Test</button>
+        <button class="seg-item" data-layer="template">Template</button>
+        <button class="seg-item" data-layer="diff">Diff</button>
+        <button class="seg-item" data-layer="split">Split</button>
+      </div>
+
+      <!-- Subtle Loading Pill -->
+      <div class="loading-pill" id="loadingOverlay">
+        <span class="spinner"></span>
+        <span id="loadingStageText">Running...</span>
+      </div>
+
+      <!-- Transformable 640x640 Surface -->
+      <div class="board-frame" id="boardSurface">
+        <img class="board-img" id="activeBoardImg" alt="PCB Board" src="" />
+        <svg class="board-svg" id="bboxSvg" viewBox="0 0 640 640"></svg>
+      </div>
+
+      <!-- Tri-Split Comparison Mode -->
+      <div class="tri-split-grid" id="triSplitDeck">
+        <div class="tri-pane">
+          <div class="tri-pane-header"><span>Template</span><span class="mono">640×640</span></div>
+          <div class="tri-pane-body"><img id="splitTemplateImg" alt="Template" src="" /></div>
         </div>
-        <div class="sample-picker">
-          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Sample:</span>
-          <select id="sampleSelect">
-            <option value="">Loading DeepPCB samples...</option>
-          </select>
-          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Standard:</span>
-          <select id="ipcClassSelect">
-            <option value="Class 2">IPC-A-600 Class 2</option>
-            <option value="Class 3">IPC-A-600 Class 3</option>
-          </select>
+        <div class="tri-pane">
+          <div class="tri-pane-header"><span>Test</span><span class="mono" id="splitBoxCount">0</span></div>
+          <div class="tri-pane-body">
+            <img id="splitTestImg" alt="Test" src="" />
+            <svg id="splitBboxSvg" viewBox="0 0 640 640"></svg>
+          </div>
+        </div>
+        <div class="tri-pane">
+          <div class="tri-pane-header"><span>Diff |T−X|</span><span class="mono">Heatmap</span></div>
+          <div class="tri-pane-body"><img id="splitDiffImg" alt="Diff" src="" /></div>
         </div>
       </div>
 
-      <div class="zone-grid">
-        <div class="zone-sidebar">
-          <div class="filter-group">
-            <span class="group-label">Inspection Triage Status</span>
-            <label class="radio-row">
-              <input type="radio" name="viewMode" value="all" checked />
-              <span>Review flagged anomalies</span>
-              <span class="badge-count" id="flaggedCountBadge">—</span>
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="viewMode" value="clean" />
-              <span>Clean pair</span>
-            </label>
-          </div>
+      <!-- Floating Bottom-Left View Toggles -->
+      <div class="floating-bottom-left">
+        <button class="ui-btn active" id="btnToggleBoxes" style="background:rgba(255,255,255,0.92);">Boxes</button>
+        <button class="ui-btn" id="btnToggleGrid" style="background:rgba(255,255,255,0.92);">Grid</button>
+        <button class="ui-btn" id="btnToggleColorize" style="background:rgba(255,255,255,0.92);">FR4</button>
+      </div>
 
-          <div class="filter-group">
-            <span class="group-label">IPC Defect Filter</span>
-            <label class="checkbox-row"><input type="checkbox" checked value="Open" class="defect-filter" /> <span>Open circuit (Discontinuity)</span></label>
-            <label class="checkbox-row"><input type="checkbox" checked value="Short" class="defect-filter" /> <span>Short circuit (Bridging)</span></label>
-            <label class="checkbox-row"><input type="checkbox" checked value="Mousebite" class="defect-filter" /> <span>Mousebite (Edge nick)</span></label>
-            <label class="checkbox-row"><input type="checkbox" checked value="Spur" class="defect-filter" /> <span>Spur (Protrusion)</span></label>
-            <label class="checkbox-row"><input type="checkbox" checked value="Spurious Copper" class="defect-filter" /> <span>Spurious Copper</span></label>
-            <label class="checkbox-row"><input type="checkbox" checked value="Pin-hole" class="defect-filter" /> <span>Pin-hole void</span></label>
-          </div>
-
-          <div class="progress-box">
-            <p class="progress-desc">
-              Boards with no detections return PASS without a model call.
-            </p>
-          </div>
-        </div>
-
-        <div class="zone-stage">
-          <div class="stage-action-bar">
-            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);" id="sampleLabelDisplay">
-              Sample: —
-            </span>
-            <span style="font-size: 0.78rem; color: var(--text-light);" id="statusIndicator">
-              Status: Ready for inspection
-            </span>
-          </div>
-
-          <div class="viewport-deck">
-            <div class="pcb-view-box">
-              <div class="pcb-view-header">
-                <span>01. Golden Reference Template</span>
-                <span style="font-family: var(--font-mono); font-size: 0.7rem;">640&times;640</span>
-              </div>
-              <div class="pcb-canvas-wrapper">
-                <img id="templateImg" alt="Golden Template" src="" />
-              </div>
-              <div class="pcb-view-footer">Defect-free template</div>
-            </div>
-
-            <div class="pcb-view-box">
-              <div class="pcb-view-header">
-                <span>02. Tested PCB + BBox Overlays</span>
-                <span class="badge-pill badge-purple" id="bboxCountBadge">0 boxes</span>
-              </div>
-              <div class="pcb-canvas-wrapper" id="testWrapper">
-                <img id="testImg" alt="Tested PCB" src="" />
-                <svg class="svg-overlay" id="bboxSvg" viewBox="0 0 640 640"></svg>
-              </div>
-              <div class="pcb-view-footer">Test image with detector boxes</div>
-            </div>
-
-            <div class="pcb-view-box">
-              <div class="pcb-view-header">
-                <span>03. Aligned Differential Map</span>
-                <span style="font-family: var(--font-mono); font-size: 0.7rem;">|T - X|</span>
-              </div>
-              <div class="pcb-canvas-wrapper">
-                <img id="diffImg" alt="Differential Map" src="" />
-              </div>
-              <div class="pcb-view-footer">Absolute difference</div>
-            </div>
-          </div>
-        </div>
+      <!-- Floating Bottom-Right Zoom Pill -->
+      <div class="floating-bottom-right">
+        <button class="zoom-btn" id="btnZoomOut" title="Zoom out">−</button>
+        <span class="zoom-label mono" id="btnZoomReset" title="Reset view (100%)">100%</span>
+        <button class="zoom-btn" id="btnZoomIn" title="Zoom in">+</button>
       </div>
     </section>
 
-    <section class="panel-card">
-      <div class="drilldown-header">
-        <div class="region-meta">
-          <span>Detections</span>
-          <span class="badge-pill badge-green" id="overallDispositionBadge">DISPOSITION: PENDING</span>
-        </div>
-        <span class="region-status" id="labeledUnitsSummary">Detected Regions: 0</span>
-      </div>
+    <!-- Right: Clean Inspector Sidebar -->
+    <aside class="inspector-panel" aria-label="Detections and Filters">
 
-      <div class="anomaly-ranking-bar">
-        <span>Detections in detector order</span>
-        <span style="margin-left: auto; font-family: var(--font-mono); font-size: 0.75rem;" id="guardrailStatusSummary">Stage 4 Guardrails: Armed</span>
-      </div>
-
-      <div class="units-row" id="unitsGallery">
-      </div>
-    </section>
-
-    <section class="panel-card">
-      <div class="panel-header">
-        <h3 style="font-size: 0.95rem; font-weight: 700;">Inspection trace</h3>
-              </div>
-      <div class="trace-section">
-        <div class="trace-timeline" id="traceTimeline">
-          <div class="trace-step">
-            <div class="step-circle">1</div>
-            <div class="step-content">
-              <span class="step-title">Stage 1: ONNX Runtime Edge Vision</span>
-              <span class="step-desc">Awaiting execution. Latency target: &lt;15ms per frame.</span>
-            </div>
-          </div>
+      <!-- 1. Verdict & Telemetry Strip -->
+      <div class="verdict-bar">
+        <span class="verdict-pill verdict-STAGE1" id="overallDispositionBadge">STAGE 1</span>
+        <div class="telemetry-nums mono">
+          <span id="latencyBadge">— ms</span>
+          <span>·</span>
+          <span id="bboxCountBadge">0 / 0</span>
         </div>
       </div>
-    </section>
 
-  </main>
+      <!-- Benchmark Readout -->
+      <div id="benchmarkReadout" class="mono" style="display:none; padding:6px 14px; background:var(--bg-subtle); border-bottom:1px solid var(--border-hairline); font-size:11px; color:var(--text-secondary);"></div>
 
-  <script>
-    let activeSamples = [];
-    let currentSampleId = null;
+      <!-- 2. Confidence Slider & Class Dots -->
+      <div class="filter-section">
+        <div class="conf-row">
+          <span>Confidence</span>
+          <input type="range" id="confSlider" min="0.00" max="0.99" step="0.01" value="0.25" />
+          <span class="mono" id="confValueLabel" style="min-width:30px; text-align:right; color:var(--text-primary); font-weight:600;">0.25</span>
+        </div>
+        <div class="class-pills" id="classChipsContainer"></div>
+      </div>
 
-    document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-GB', {
-      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+      <!-- 3. Hairline Detection Rows -->
+      <div class="detections-scroll" id="detectionsList"></div>
+    </aside>
+
+  </div>
+
+  <!-- Bottom 36px Timeline Strip + Collapsible Audit Drawer -->
+  <footer class="bottom-bar" aria-label="Pipeline Timeline">
+    <div class="timeline-strip">
+      <div class="stages-track" id="timelineStageNodes"></div>
+      <div class="mono" style="display:flex; align-items:center; gap:10px; font-size:11px; color:var(--text-muted); flex-shrink:0;">
+        <span id="sampleLabelDisplay">#—</span>
+        <span id="cursorCoordReadout">(—, —)</span>
+        <button class="ui-btn" id="btnToggleTraceDrawer" style="height:22px; padding:0 8px; font-size:11px;">Trace</button>
+      </div>
+    </div>
+
+    <div class="trace-drawer" id="traceDrawer">
+      <div class="trace-drawer-header">
+        <span id="traceDetailTitle">Stage 1 — Execution Trace</span>
+        <button class="ui-btn" id="btnCloseTraceDrawer" style="height:20px; padding:0 6px; font-size:11px;">Close</button>
+      </div>
+      <div class="trace-pre" id="traceJsonViewer"></div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-backdrop" id="uploadModal">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <strong style="font-size:13px;">Upload PCB Pair</strong>
+      <button class="ui-btn" id="btnCloseUpload" style="height:22px; padding:0 6px;">✕</button>
+    </div>
+    <form id="uploadForm" style="display:flex; flex-direction:column; gap:10px;">
+      <div>
+        <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Template Image</div>
+        <input type="file" id="uploadTemplateFile" accept="image/*" required class="ui-input" style="width:100%; height:auto; padding:5px;" />
+      </div>
+      <div>
+        <div style="font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Test Image</div>
+        <input type="file" id="uploadTestFile" accept="image/*" required class="ui-input" style="width:100%; height:auto; padding:5px;" />
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
+        <button type="button" class="ui-btn" id="btnCancelUpload">Cancel</button>
+        <button type="submit" class="ui-btn ui-btn-primary">Upload &amp; Triage</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Hidden legacy nodes for DOM compatibility -->
+<div style="display:none;" aria-hidden="true">
+  <img id="templateImg" alt="" />
+  <img id="testImg" alt="" />
+  <img id="diffImg" alt="" />
+  <span id="statusIndicator">Ready</span>
+  <span id="labeledUnitsSummary">0</span>
+  <span id="guardrailStatusSummary">Armed</span>
+</div>
+
+<script>
+  const DEFECT_META = {
+    "Open":            { color: "#E11D48" },
+    "Short":           { color: "#EA580C" },
+    "Mousebite":       { color: "#CA8A04" },
+    "Spur":            { color: "#0284C7" },
+    "Spurious Copper": { color: "#7C3AED" },
+    "Pin-hole":        { color: "#059669" }
+  };
+  const ALL_CLASSES = Object.keys(DEFECT_META);
+
+  /**
+   * Canvas Interaction Statechart (IDLE / HOVER_BOX / SELECTED_LOCKED / PANNING / LOADING)
+   */
+  const CanvasStatechart = {
+    state: "IDLE",
+    returnState: "IDLE",
+    hoveredIndex: null,
+    selectedIndex: null,
+    zoom: 1.0,
+    panX: 0,
+    panY: 0,
+    dragStartX: 0,
+    dragStartY: 0,
+    dragOriginPanX: 0,
+    dragOriginPanY: 0,
+    movedDuringDrag: false,
+
+    dispatch(event, payload = {}) {
+      switch (event) {
+        case "LOAD_START":
+          this.state = "LOADING";
+          this.hoveredIndex = null;
+          break;
+        case "LOAD_DONE":
+          this.state = "IDLE";
+          this.hoveredIndex = null;
+          this.selectedIndex = null;
+          break;
+        case "BOX_ENTER":
+          if (this.state === "LOADING" || this.state === "PANNING") break;
+          this.hoveredIndex = payload.index;
+          if (this.state === "IDLE") this.state = "HOVER_BOX";
+          break;
+        case "BOX_LEAVE":
+          if (this.state === "LOADING" || this.state === "PANNING") break;
+          this.hoveredIndex = null;
+          if (this.state === "HOVER_BOX") {
+            this.state = this.selectedIndex !== null ? "SELECTED_LOCKED" : "IDLE";
+          }
+          break;
+        case "BOX_CLICK":
+          if (this.state === "LOADING") break;
+          if (this.selectedIndex === payload.index) {
+            this.selectedIndex = null;
+            this.state = this.hoveredIndex !== null ? "HOVER_BOX" : "IDLE";
+          } else {
+            this.selectedIndex = payload.index;
+            this.state = "SELECTED_LOCKED";
+          }
+          break;
+        case "PAN_START":
+          if (this.state === "LOADING") break;
+          this.returnState = this.selectedIndex !== null ? "SELECTED_LOCKED" : "IDLE";
+          this.state = "PANNING";
+          this.dragStartX = payload.clientX;
+          this.dragStartY = payload.clientY;
+          this.dragOriginPanX = this.panX;
+          this.dragOriginPanY = this.panY;
+          this.movedDuringDrag = false;
+          break;
+        case "PAN_MOVE":
+          if (this.state !== "PANNING") break;
+          const dx = payload.clientX - this.dragStartX;
+          const dy = payload.clientY - this.dragStartY;
+          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this.movedDuringDrag = true;
+          this.panX = this.dragOriginPanX + dx;
+          this.panY = this.dragOriginPanY + dy;
+          applyCanvasTransform();
+          break;
+        case "PAN_END":
+          if (this.state !== "PANNING") break;
+          if (!this.movedDuringDrag && payload.clickedBlankCanvas) {
+            this.selectedIndex = null;
+            this.state = "IDLE";
+          } else {
+            this.state = this.returnState;
+          }
+          break;
+        case "CLEAR_SELECTION":
+          if (this.state === "LOADING") break;
+          this.selectedIndex = null;
+          this.state = "IDLE";
+          break;
+        case "RESET_VIEW":
+          this.zoom = 1.0;
+          this.panX = 0;
+          this.panY = 0;
+          applyCanvasTransform();
+          break;
+      }
+      syncStatechartDOM();
+    }
+  };
+
+  const AppStore = {
+    samples: [],
+    groups: [],
+    currentSampleId: null,
+    runMode: "triage", // 'stage1' | 'triage' | 'clean' | 'rogue'
+    activeLayer: "test",
+    holdingSpaceTemplate: false,
+    colorizePcb: false,
+    showGrid: false,
+    showBoxes: true,
+    confThreshold: 0.25,
+    enabledClasses: new Set(ALL_CLASSES),
+    lastPayload: null,
+    activeStageIdx: 0,
+    drawerOpen: false
+  };
+
+  let scrollOnSelect = false;
+
+  function applyCanvasTransform() {
+    const surface = document.getElementById("boardSurface");
+    surface.style.transform = `translate(${CanvasStatechart.panX}px, ${CanvasStatechart.panY}px) scale(${CanvasStatechart.zoom})`;
+    document.getElementById("btnZoomReset").textContent = `${Math.round(CanvasStatechart.zoom * 100)}%`;
+  }
+
+  function syncStatechartDOM() {
+    document.body.setAttribute("data-fsm-state", CanvasStatechart.state);
+    document.getElementById("canvasViewport").setAttribute("data-state", CanvasStatechart.state);
+
+    document.querySelectorAll(".bbox-group").forEach(el => {
+      const idx = Number(el.getAttribute("data-idx"));
+      el.classList.toggle("selected", idx === CanvasStatechart.selectedIndex);
+      el.classList.toggle("hovered", idx === CanvasStatechart.hoveredIndex);
     });
 
-    async function loadSamples() {
-      try {
-        const res = await fetch('/api/samples');
-        const data = await res.json();
-        activeSamples = data.samples || [];
-        const sel = document.getElementById('sampleSelect');
-        sel.innerHTML = '';
-        activeSamples.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.sample_id;
-          opt.textContent = `${s.sample_id} (${s.group} • ${s.gt_defect_count} defects: ${s.defect_classes.join(', ')})`;
-          sel.appendChild(opt);
-        });
-        if (activeSamples.length > 0) {
-          currentSampleId = activeSamples[0].sample_id;
-          const chosen = activeSamples[0];
-          document.getElementById('sampleLabelDisplay').textContent =
-            `Sample: ${chosen.group} / ${chosen.sample_id}`;
-          runInspect(false);
-        }
-      } catch (err) {
-        console.error('Failed to load samples', err);
+    document.querySelectorAll(".det-item").forEach(el => {
+      const idx = Number(el.getAttribute("data-idx"));
+      const isSel = idx === CanvasStatechart.selectedIndex;
+      el.classList.toggle("selected", isSel);
+      el.classList.toggle("hovered", idx === CanvasStatechart.hoveredIndex);
+      if (isSel && scrollOnSelect) {
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
-    }
+    });
+    scrollOnSelect = false;
+  }
 
-    async function runInspect(cleanMode = false) {
-      document.getElementById('statusIndicator').textContent = 'Status: Inspecting Stage 1...';
-      try {
-        const res = await fetch('/api/inspect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sample_id: currentSampleId, clean_board_mode: cleanMode })
-        });
-        const data = await res.json();
-        renderInspectionData(data);
-        document.getElementById('statusIndicator').textContent = 'Status: Stage 1 Complete';
-      } catch (err) {
-        console.error(err);
-      }
-    }
+  function getFilteredDetections() {
+    if (!AppStore.lastPayload) return [];
+    const report = AppStore.lastPayload.report || {};
+    const rawDetections = AppStore.lastPayload.detections || report.detections || [];
+    const rawDecisions = AppStore.lastPayload.decisions || report.decisions || [];
 
-    async function runTriage(cleanMode = false, rogueMode = false) {
-      document.getElementById('statusIndicator').textContent = 'Status: Running 4-Stage Triage...';
-      const batchId = document.getElementById('batchIdInput').value || 'BATCH-SMT-01';
-      const ipcClass = document.getElementById('ipcClassSelect').value || 'Class 2';
-
-      try {
-        const res = await fetch('/api/agent-triage', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sample_id: currentSampleId,
-            batch_id: batchId,
-            ipc_class: ipcClass,
-            clean_board_mode: cleanMode,
-            simulate_rogue_vlm: rogueMode
-          })
-        });
-        const data = await res.json();
-        renderTriageResponse(data);
-        document.getElementById('statusIndicator').textContent = 'Status: Triage Complete';
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function renderInspectionData(data) {
-      document.getElementById('templateImg').src = data.template_b64;
-      document.getElementById('testImg').src = data.test_b64;
-      document.getElementById('diffImg').src = data.diff_b64;
-      const report = data.report || {};
-      const latency = data.stage1_latency_ms != null ? data.stage1_latency_ms : report.stage1_latency_ms;
-      if (typeof latency === 'number') {
-        document.getElementById('latencyBadge').textContent = `ONNX: ${latency.toFixed(2)} ms`;
-      }
-      renderBoundingBoxes(data.detections || report.detections || []);
-    }
-
-    function renderBoundingBoxes(detections) {
-      const svg = document.getElementById('bboxSvg');
-      svg.innerHTML = '';
-      document.getElementById('bboxCountBadge').textContent = `${detections.length} boxes`;
-      const flagged = document.getElementById('flaggedCountBadge');
-      if (flagged) flagged.textContent = `${detections.length} regions`;
-
-      detections.forEach((box, i) => {
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', box.x1);
-        rect.setAttribute('y', box.y1);
-        rect.setAttribute('width', box.x2 - box.x1);
-        rect.setAttribute('height', box.y2 - box.y1);
-        rect.setAttribute('fill', 'rgba(239, 68, 68, 0.25)');
-        rect.setAttribute('stroke', '#ef4444');
-        rect.setAttribute('stroke-width', '2');
-
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', box.x1 + 3);
-        text.setAttribute('y', Math.max(12, box.y1 - 4));
-        text.setAttribute('fill', '#ef4444');
-        text.setAttribute('font-size', '11');
-        text.setAttribute('font-weight', 'bold');
-        text.textContent = `${box.defect_class} #${i+1}`;
-
-        svg.appendChild(rect);
-        svg.appendChild(text);
-      });
-    }
-
-    function renderTriageResponse(data) {
-      const report = data.report;
-      renderInspectionData(data);
-
-      const haltBanner = document.getElementById('haltBanner');
-      if (data.line_halted) {
-        haltBanner.classList.add('active');
-      } else {
-        haltBanner.classList.remove('active');
-      }
-
-      const dispBadge = document.getElementById('overallDispositionBadge');
-      dispBadge.textContent = `DISPOSITION: ${data.board_disposition}`;
-      dispBadge.className = 'badge-pill ' + (
-        data.board_disposition === 'PASS' ? 'badge-green' :
-        data.board_disposition === 'REWORK' ? 'badge-purple' : 'badge-red'
+    return rawDetections
+      .map((box, originalIdx) => ({
+        box,
+        decision: rawDecisions[originalIdx] || null,
+        originalIdx
+      }))
+      .filter(item =>
+        AppStore.enabledClasses.has(item.box.defect_class) &&
+        Number(item.box.confidence) >= AppStore.confThreshold
       );
+  }
 
-      const gallery = document.getElementById('unitsGallery');
-      gallery.innerHTML = '';
+  function renderClassFilterPills() {
+    const container = document.getElementById("classChipsContainer");
+    const report = (AppStore.lastPayload && AppStore.lastPayload.report) || {};
+    const rawDetections = (AppStore.lastPayload && (AppStore.lastPayload.detections || report.detections)) || [];
 
-      const normalCard = document.createElement('div');
-      normalCard.className = 'unit-card';
-      normalCard.innerHTML = `
-        <div class="unit-card-badge badge-normal">
-          <span>Template</span>
-        </div>
-        <div class="unit-crop-view">
-          <img src="${data.template_b64}" />
-        </div>
-        <div class="unit-details">
-          <div class="unit-prop"><span>Class:</span><span class="unit-val">Template</span></div>
-          <div class="unit-prop"><span>Status:</span><span class="unit-val" style="color:var(--status-pass)">PASS</span></div>
+    const counts = {};
+    ALL_CLASSES.forEach(c => { counts[c] = 0; });
+    rawDetections.forEach(d => {
+      if (Number(d.confidence) >= AppStore.confThreshold) {
+        counts[d.defect_class] = (counts[d.defect_class] || 0) + 1;
+      }
+    });
+
+    container.innerHTML = "";
+    ALL_CLASSES.forEach(clsName => {
+      const meta = DEFECT_META[clsName];
+      const enabled = AppStore.enabledClasses.has(clsName);
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = `cls-tag ${enabled ? "" : "off"}`;
+      pill.innerHTML = `
+        <span class="cls-dot" style="background:${meta.color}"></span>
+        <span>${clsName}</span>
+        <span class="cls-num">${counts[clsName] || 0}</span>
+      `;
+      pill.addEventListener("click", () => {
+        if (AppStore.enabledClasses.has(clsName)) {
+          AppStore.enabledClasses.delete(clsName);
+        } else {
+          AppStore.enabledClasses.add(clsName);
+        }
+        if (
+          CanvasStatechart.selectedIndex !== null &&
+          rawDetections[CanvasStatechart.selectedIndex] &&
+          !AppStore.enabledClasses.has(rawDetections[CanvasStatechart.selectedIndex].defect_class)
+        ) {
+          CanvasStatechart.dispatch("CLEAR_SELECTION");
+        }
+        refreshFilteredViews();
+      });
+      container.appendChild(pill);
+    });
+  }
+
+  function buildSvgOverlay(svgEl, filteredItems, interactive = true) {
+    svgEl.innerHTML = "";
+
+    if (AppStore.showGrid) {
+      const gGrid = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      for (let i = 1; i < 8; i++) {
+        const p = i * 80;
+        const v = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        v.setAttribute("x1", p); v.setAttribute("y1", 0);
+        v.setAttribute("x2", p); v.setAttribute("y2", 640);
+        v.setAttribute("stroke", "rgba(37, 99, 235, 0.22)");
+        v.setAttribute("stroke-dasharray", "3 3");
+        gGrid.appendChild(v);
+
+        const h = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        h.setAttribute("x1", 0); h.setAttribute("y1", p);
+        h.setAttribute("x2", 640); h.setAttribute("y2", p);
+        h.setAttribute("stroke", "rgba(37, 99, 235, 0.22)");
+        h.setAttribute("stroke-dasharray", "3 3");
+        gGrid.appendChild(h);
+      }
+      svgEl.appendChild(gGrid);
+    }
+
+    if (!AppStore.showBoxes) return;
+
+    filteredItems.forEach(({ box, originalIdx }) => {
+      const meta = DEFECT_META[box.defect_class] || { color: "#E11D48" };
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", "bbox-group");
+      g.setAttribute("data-idx", String(originalIdx));
+      if (originalIdx === CanvasStatechart.selectedIndex) g.classList.add("selected");
+      if (originalIdx === CanvasStatechart.hoveredIndex) g.classList.add("hovered");
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("class", "bbox-rect");
+      rect.setAttribute("x", box.x1);
+      rect.setAttribute("y", box.y1);
+      rect.setAttribute("width", Math.max(4, box.x2 - box.x1));
+      rect.setAttribute("height", Math.max(4, box.y2 - box.y1));
+      rect.setAttribute("stroke", meta.color);
+      rect.setAttribute("stroke-width", "2");
+      rect.setAttribute("fill", meta.color);
+      rect.setAttribute("fill-opacity", "0.14");
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", box.x1 + 2);
+      text.setAttribute("y", Math.max(13, box.y1 - 4));
+      text.setAttribute("fill", meta.color);
+      text.setAttribute("font-size", "11");
+      text.setAttribute("font-family", "monospace");
+      text.setAttribute("font-weight", "700");
+      text.setAttribute("paint-order", "stroke");
+      text.setAttribute("stroke", "#FFFFFF");
+      text.setAttribute("stroke-width", "3px");
+      text.textContent = `#${originalIdx + 1} ${box.defect_class}`;
+
+      g.appendChild(rect);
+      g.appendChild(text);
+
+      if (interactive) {
+        g.addEventListener("mouseenter", () => CanvasStatechart.dispatch("BOX_ENTER", { index: originalIdx }));
+        g.addEventListener("mouseleave", () => CanvasStatechart.dispatch("BOX_LEAVE", { index: originalIdx }));
+        g.addEventListener("click", (e) => {
+          e.stopPropagation();
+          scrollOnSelect = true;
+          CanvasStatechart.dispatch("BOX_CLICK", { index: originalIdx });
+        });
+      }
+      svgEl.appendChild(g);
+    });
+  }
+
+  function renderDetectionsList(filteredItems, totalCount) {
+    const listEl = document.getElementById("detectionsList");
+    listEl.innerHTML = "";
+
+    document.getElementById("bboxCountBadge").textContent = `${filteredItems.length} / ${totalCount}`;
+    document.getElementById("splitBoxCount").textContent = `${filteredItems.length}`;
+    document.getElementById("labeledUnitsSummary").textContent = String(filteredItems.length);
+
+    if (totalCount === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <strong style="color:var(--pass-fg);">✓ No Defects · Fast-Path PASS</strong>
+          <span>0 detections. VLM bypassed (0 tokens).</span>
         </div>
       `;
-      gallery.appendChild(normalCard);
-
-      (report.decisions || []).forEach((dec, idx) => {
-        const box = report.detections[idx] || {};
-        const isOverride = dec.guardrail_overridden;
-        const badgeClass = isOverride ? 'badge-override' : (dec.disposition === 'SCRAP' ? 'badge-scrap' : 'badge-rework');
-
-        const card = document.createElement('div');
-        card.className = 'unit-card';
-        const pad = 18;
-        const x1 = Math.max(0, (box.x1 || 0) - pad);
-        const y1 = Math.max(0, (box.y1 || 0) - pad);
-        const x2 = Math.min(640, (box.x2 || 0) + pad);
-        const y2 = Math.min(640, (box.y2 || 0) + pad);
-        const sw = Math.max(8, x2 - x1);
-        const sh = Math.max(8, y2 - y1);
-        const viewW = 210;
-        const viewH = 140;
-        const scale = Math.min(viewW / sw, viewH / sh);
-        const left = Math.round((viewW - sw * scale) / 2 - x1 * scale);
-        const top = Math.round((viewH - sh * scale) / 2 - y1 * scale);
-        card.innerHTML = `
-          <div class="unit-card-badge ${badgeClass}">
-            <span>Region #${idx+1} · ${box.defect_class || 'Defect'}</span>
-          </div>
-          <div class="unit-crop-view">
-            <img src="${data.test_b64}" alt="" style="position:absolute;left:${left}px;top:${top}px;width:${Math.round(640 * scale)}px;height:${Math.round(640 * scale)}px;max-width:none;object-fit:fill;" />
-          </div>
-          <div class="unit-details">
-            <div class="unit-prop"><span>Disposition:</span><span class="unit-val">${dec.disposition}</span></div>
-            <div class="unit-prop"><span>Area:</span><span class="unit-val">${box.area_px || 0} px²</span></div>
-            <div class="unit-prop"><span>Clause:</span><span class="unit-val" style="font-size:0.68rem">${dec.ipc_standard_clause.split('(')[0]}</span></div>
-            ${isOverride ? `<div style="color:#7c3aed; font-size:0.7rem; font-weight:700; margin-top:2px;">[STAGE 4 OVERRIDE]</div>` : ''}
-          </div>
-        `;
-        gallery.appendChild(card);
-      });
-
-      document.getElementById('labeledUnitsSummary').textContent = `Detected Units: ${report.decisions ? report.decisions.length : 0}`;
-
-      renderTraceTimeline(data.trace || []);
+      return;
     }
 
-    function renderTraceTimeline(trace) {
-      const container = document.getElementById('traceTimeline');
-      container.innerHTML = '';
-      trace.forEach((step, idx) => {
-        const item = document.createElement('div');
-        item.className = 'trace-step';
-        item.innerHTML = `
-          <div class="step-circle">${idx+1}</div>
-          <div class="step-content">
-            <span class="step-title">${step.stage}</span>
-            <span class="step-desc">${JSON.stringify(step).slice(0, 160)}...</span>
-          </div>
-        `;
-        container.appendChild(item);
+    if (filteredItems.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <strong>All ${totalCount} detections filtered out</strong>
+          <button class="ui-btn" id="btnResetFiltersInline" style="margin-top:8px;">Reset Filters</button>
+        </div>
+      `;
+      document.getElementById("btnResetFiltersInline").addEventListener("click", () => {
+        AppStore.confThreshold = 0.0;
+        document.getElementById("confSlider").value = "0.00";
+        document.getElementById("confValueLabel").textContent = "0.00";
+        AppStore.enabledClasses = new Set(ALL_CLASSES);
+        refreshFilteredViews();
       });
+      return;
     }
 
-    document.getElementById('sampleSelect').addEventListener('change', (e) => {
-      currentSampleId = e.target.value;
-      document.getElementById('sampleLabelDisplay').textContent = `Sample: ${currentSampleId}`;
-      runInspect(false);
+    const testB64 = (AppStore.lastPayload && AppStore.lastPayload.test_b64) || "";
+
+    filteredItems.forEach(({ box, decision, originalIdx }) => {
+      const meta = DEFECT_META[box.defect_class] || { color: "#E11D48" };
+      const disp = decision ? decision.disposition : "STAGE1";
+      const isOverride = Boolean(decision && decision.guardrail_overridden);
+
+      const pad = 20;
+      const x1 = Math.max(0, box.x1 - pad);
+      const y1 = Math.max(0, box.y1 - pad);
+      const x2 = Math.min(640, box.x2 + pad);
+      const y2 = Math.min(640, box.y2 + pad);
+      const sw = Math.max(8, x2 - x1);
+      const sh = Math.max(8, y2 - y1);
+      const scale = Math.min(68 / sw, 68 / sh);
+      const left = Math.round((68 - sw * scale) / 2 - x1 * scale);
+      const top = Math.round((68 - sh * scale) / 2 - y1 * scale);
+
+      const gridR = Math.min(7, Math.floor(((box.y1 + box.y2) / 2) / 80));
+      const gridC = Math.min(7, Math.floor(((box.x1 + box.x2) / 2) / 80));
+      const area = box.area_px || (box.x2 - box.x1) * (box.y2 - box.y1);
+
+      const row = document.createElement("div");
+      row.className = "det-item";
+      row.setAttribute("data-idx", String(originalIdx));
+      if (originalIdx === CanvasStatechart.selectedIndex) row.classList.add("selected");
+      if (originalIdx === CanvasStatechart.hoveredIndex) row.classList.add("hovered");
+
+      row.innerHTML = `
+        <div class="det-row-main">
+          <div class="det-title">
+            <span class="cls-dot" style="background:${meta.color}; width:8px; height:8px;"></span>
+            <span class="mono" style="color:var(--text-muted); font-size:12px;">#${originalIdx + 1}</span>
+            <span>${box.defect_class}</span>
+          </div>
+          <span class="verdict-pill verdict-${disp}" style="font-size:10px; padding:1px 6px;">${disp}</span>
+        </div>
+        <div class="det-sub mono">
+          <span>${(box.confidence * 100).toFixed(0)}%</span>
+          <span>·</span>
+          <span>${area} px²</span>
+          <span>·</span>
+          <span>R${gridR}_C${gridC}</span>
+          ${isOverride ? `<span style="color:var(--override-fg); font-weight:600;">· Overridden</span>` : ""}
+        </div>
+        <div class="det-expanded">
+          <div class="roi-box-row">
+            <div class="roi-thumb">
+              <img src="${testB64}" alt="ROI" style="position:absolute;left:${left}px;top:${top}px;width:${Math.round(640 * scale)}px;height:${Math.round(640 * scale)}px;max-width:none;image-rendering:pixelated;" />
+            </div>
+            <div class="roi-meta">
+              <div class="mono">[${box.x1}, ${box.y1}, ${box.x2}, ${box.y2}]</div>
+              ${decision ? `
+                <div>${decision.ipc_standard_clause}</div>
+                <div>${decision.recommended_corrective_action}</div>
+              ` : `<div>Click "Run" in Triage mode for IPC-A-600 evaluation.</div>`}
+            </div>
+          </div>
+          ${isOverride ? `<div class="override-note">Stage 4 Override: ${decision.override_reason}</div>` : ""}
+        </div>
+      `;
+
+      row.addEventListener("mouseenter", () => CanvasStatechart.dispatch("BOX_ENTER", { index: originalIdx }));
+      row.addEventListener("mouseleave", () => CanvasStatechart.dispatch("BOX_LEAVE", { index: originalIdx }));
+      row.addEventListener("click", () => CanvasStatechart.dispatch("BOX_CLICK", { index: originalIdx }));
+      listEl.appendChild(row);
     });
+  }
 
-    document.getElementById('btnRunTriage').addEventListener('click', () => runTriage(false, false));
-    document.getElementById('btnFastPath').addEventListener('click', () => runTriage(true, false));
-    document.getElementById('btnRogueVlm').addEventListener('click', () => runTriage(false, true));
+  function updateActiveLayerImage() {
+    if (!AppStore.lastPayload) return;
+    const data = AppStore.lastPayload;
 
-    document.getElementById('btnResetBatch').addEventListener('click', async () => {
-      const batchId = document.getElementById('batchIdInput').value || 'BATCH-SMT-01';
-      await fetch('/api/batch-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batch_id: batchId })
-      });
-      document.getElementById('haltBanner').classList.remove('active');
-      alert(`Batch ${batchId} telemetry reset!`);
-    });
+    document.getElementById("templateImg").src = data.template_b64 || "";
+    document.getElementById("testImg").src = data.test_b64 || "";
+    document.getElementById("diffImg").src = data.diff_b64 || "";
 
-    document.getElementById('btnDismissHalt').addEventListener('click', () => {
-      document.getElementById('haltBanner').classList.remove('active');
-    });
+    document.getElementById("splitTemplateImg").src = data.template_b64 || "";
+    document.getElementById("splitTestImg").src = data.test_b64 || "";
+    document.getElementById("splitDiffImg").src = data.diff_b64 || "";
 
-    document.getElementById('btnBenchmark').addEventListener('click', async () => {
-      const res = await fetch('/api/benchmark');
-      const data = await res.json();
-      const bench = data.onnx_benchmark;
-      const readout = document.getElementById('benchmarkReadout');
-      if (!bench) {
-        readout.style.display = 'inline-flex';
-        readout.textContent = 'Benchmark response did not include onnx_benchmark.';
-        return;
+    const surface = document.getElementById("boardSurface");
+    const splitDeck = document.getElementById("triSplitDeck");
+
+    if (AppStore.activeLayer === "split") {
+      surface.style.display = "none";
+      splitDeck.classList.add("active");
+    } else {
+      surface.style.display = "block";
+      splitDeck.classList.remove("active");
+      const layer = AppStore.holdingSpaceTemplate ? "template" : AppStore.activeLayer;
+      const imgEl = document.getElementById("activeBoardImg");
+      imgEl.src = layer === "template" ? (data.template_b64 || "") : (layer === "diff" ? (data.diff_b64 || "") : (data.test_b64 || ""));
+    }
+  }
+
+  function refreshFilteredViews() {
+    if (!AppStore.lastPayload) return;
+    const report = AppStore.lastPayload.report || {};
+    const rawDetections = AppStore.lastPayload.detections || report.detections || [];
+    const filtered = getFilteredDetections();
+
+    renderClassFilterPills();
+    buildSvgOverlay(document.getElementById("bboxSvg"), filtered, true);
+    buildSvgOverlay(document.getElementById("splitBboxSvg"), filtered, false);
+    renderDetectionsList(filtered, rawDetections.length);
+  }
+
+  function renderTimeline(data) {
+    const trace = data.trace || [];
+    const report = data.report || {};
+    const rawDetections = data.detections || report.detections || [];
+    const rawDecisions = data.decisions || report.decisions || [];
+    const latency = data.stage1_latency_ms != null ? data.stage1_latency_ms : report.stage1_latency_ms;
+    const isFastPath = Boolean(data.fast_path_pass || report.fast_path_pass);
+    const hasTriage = trace.length > 0;
+    const overridesCount = rawDecisions.filter(d => d.guardrail_overridden).length;
+
+    const stages = [
+      {
+        idx: 1,
+        label: `Stage 1 Vision (${typeof latency === "number" ? latency.toFixed(1) + "ms" : "—"})`,
+        dotClass: "done",
+        payload: trace.filter(t => String(t.stage).includes("Stage 1"))
+      },
+      {
+        idx: 2,
+        label: isFastPath ? "Stage 2 Bypassed" : `Stage 2 Rules (${hasTriage ? rawDetections.length : "—"})`,
+        dotClass: hasTriage && !isFastPath ? "done" : "",
+        payload: trace.filter(t => String(t.stage).includes("Stage 2"))
+      },
+      {
+        idx: 3,
+        label: isFastPath ? "Stage 3 (0 Tokens)" : `Stage 3 Triage`,
+        dotClass: hasTriage && !isFastPath ? "done" : "",
+        payload: trace.filter(t => String(t.stage).includes("Stage 3") || t.vlm_attempts !== undefined)
+      },
+      {
+        idx: 4,
+        label: overridesCount > 0 ? `Stage 4 Guardrails (${overridesCount} overridden)` : "Stage 4 Guardrails",
+        dotClass: overridesCount > 0 ? "override" : (hasTriage ? "done" : ""),
+        payload: trace.filter(t => String(t.stage).includes("Stage 4"))
       }
-      const provider = String(bench.execution_provider).replace('ExecutionProvider', '');
-      readout.style.display = 'inline-flex';
-      readout.textContent =
-        'median ' + Number(bench.p50_ms).toFixed(2) + ' ms' +
-        ' · mean ' + Number(bench.mean_ms).toFixed(2) + ' ms' +
-        ' · ' + Number(bench.fps).toFixed(1) + ' fps' +
-        ' · ' + provider;
+    ];
+
+    const track = document.getElementById("timelineStageNodes");
+    track.innerHTML = "";
+
+    stages.forEach((st, i) => {
+      if (i > 0) {
+        const arr = document.createElement("span");
+        arr.className = "stage-arrow";
+        arr.textContent = "→";
+        track.appendChild(arr);
+      }
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `stage-pill ${AppStore.activeStageIdx === i && AppStore.drawerOpen ? "active" : ""}`;
+      btn.innerHTML = `<span class="stage-dot ${st.dotClass}"></span><span>${st.label}</span>`;
+      btn.addEventListener("click", () => {
+        if (AppStore.activeStageIdx === i && AppStore.drawerOpen) {
+          AppStore.drawerOpen = false;
+        } else {
+          AppStore.activeStageIdx = i;
+          AppStore.drawerOpen = true;
+        }
+        document.getElementById("traceDrawer").classList.toggle("open", AppStore.drawerOpen);
+        renderTimeline(data);
+      });
+      track.appendChild(btn);
     });
 
-    loadSamples();
-  </script>
+    const chosen = stages[AppStore.activeStageIdx] || stages[0];
+    document.getElementById("traceDetailTitle").textContent = chosen.label;
+    const viewer = document.getElementById("traceJsonViewer");
+    if (chosen.payload && chosen.payload.length > 0) {
+      viewer.textContent = JSON.stringify(chosen.payload, null, 2);
+    } else {
+      viewer.textContent = JSON.stringify({
+        sample_id: data.sample_id,
+        stage1_latency_ms: latency,
+        fast_path_pass: isFastPath,
+        detections: rawDetections
+      }, null, 2);
+    }
+  }
+
+  function applyInspectionPayload(data) {
+    AppStore.lastPayload = data;
+    const report = data.report || {};
+    const latency = data.stage1_latency_ms != null ? data.stage1_latency_ms : report.stage1_latency_ms;
+
+    if (typeof latency === "number") {
+      document.getElementById("latencyBadge").textContent = `${latency.toFixed(2)} ms`;
+    }
+    document.getElementById("sampleLabelDisplay").textContent = `#${data.sample_id || "—"}`;
+
+    const dispBadge = document.getElementById("overallDispositionBadge");
+    const boardDisp = data.board_disposition || (data.fast_path_pass || report.fast_path_pass ? "PASS" : "STAGE1");
+    dispBadge.textContent = boardDisp;
+    dispBadge.className = `verdict-pill verdict-${boardDisp}`;
+    document.body.setAttribute("data-disposition", boardDisp);
+
+    document.getElementById("haltBanner").classList.toggle("active", Boolean(data.line_halted));
+
+    updateActiveLayerImage();
+    refreshFilteredViews();
+    renderTimeline(data);
+  }
+
+  function setLoading(active, text = "Running...") {
+    if (active) {
+      CanvasStatechart.dispatch("LOAD_START");
+      document.getElementById("loadingStageText").textContent = text;
+      document.getElementById("loadingOverlay").classList.add("active");
+    } else {
+      document.getElementById("loadingOverlay").classList.remove("active");
+      CanvasStatechart.dispatch("LOAD_DONE");
+    }
+  }
+
+  async function loadSamples(groupFilter = "") {
+    try {
+      const url = groupFilter ? `/api/samples?group=${encodeURIComponent(groupFilter)}&limit=200` : `/api/samples?limit=200`;
+      const res = await fetch(url);
+      const data = await res.json();
+      AppStore.samples = data.samples || [];
+      AppStore.groups = data.groups || [];
+
+      const groupSel = document.getElementById("groupFilterSelect");
+      if (groupSel.options.length <= 1 && AppStore.groups.length > 0) {
+        AppStore.groups.forEach(g => {
+          const opt = document.createElement("option");
+          opt.value = g;
+          opt.textContent = g;
+          groupSel.appendChild(opt);
+        });
+      }
+
+      const sel = document.getElementById("sampleSelect");
+      sel.innerHTML = "";
+      AppStore.samples.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.sample_id;
+        opt.textContent = `#${s.sample_id} (${s.gt_defect_count} defects)`;
+        sel.appendChild(opt);
+      });
+
+      if (AppStore.samples.length > 0) {
+        AppStore.currentSampleId = AppStore.samples[0].sample_id;
+        await executeCurrentMode();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function runInspect(cleanMode = false) {
+    setLoading(true, "Stage 1 detecting...");
+    try {
+      const res = await fetch("/api/inspect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sample_id: AppStore.currentSampleId,
+          clean_board_mode: cleanMode,
+          colorize_pcb: AppStore.colorizePcb
+        })
+      });
+      const data = await res.json();
+      setLoading(false);
+      applyInspectionPayload(data);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  }
+
+  async function runTriage(cleanMode = false, rogueMode = false) {
+    setLoading(true, rogueMode ? "Running Rogue VLM eval..." : "Running 4-stage triage...");
+    const batchId = document.getElementById("batchIdInput").value || "BATCH-SMT-01";
+    const ipcClass = document.getElementById("ipcClassSelect").value || "Class 2";
+    try {
+      const res = await fetch("/api/agent-triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sample_id: AppStore.currentSampleId,
+          batch_id: batchId,
+          ipc_class: ipcClass,
+          clean_board_mode: cleanMode,
+          simulate_rogue_vlm: rogueMode,
+          colorize_pcb: AppStore.colorizePcb
+        })
+      });
+      const data = await res.json();
+      setLoading(false);
+      applyInspectionPayload(data);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  }
+
+  function executeCurrentMode() {
+    if (AppStore.runMode === "stage1") return runInspect(false);
+    if (AppStore.runMode === "clean") return runTriage(true, false);
+    if (AppStore.runMode === "rogue") return runTriage(false, true);
+    return runTriage(false, false);
+  }
+
+  // Top Bar Mode Tabs & Execute
+  document.querySelectorAll("#runModeTabs .seg-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#runModeTabs .seg-item").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      AppStore.runMode = btn.getAttribute("data-mode");
+      executeCurrentMode();
+    });
+  });
+
+  document.getElementById("btnExecuteActiveMode").addEventListener("click", executeCurrentMode);
+  document.getElementById("groupFilterSelect").addEventListener("change", e => loadSamples(e.target.value));
+  document.getElementById("sampleSelect").addEventListener("change", e => {
+    AppStore.currentSampleId = e.target.value;
+    executeCurrentMode();
+  });
+  document.getElementById("ipcClassSelect").addEventListener("change", executeCurrentMode);
+
+  // Floating Layer Tabs & Toggles
+  document.querySelectorAll("#layerTabs .seg-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#layerTabs .seg-item").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      AppStore.activeLayer = btn.getAttribute("data-layer");
+      updateActiveLayerImage();
+    });
+  });
+
+  document.getElementById("btnToggleBoxes").addEventListener("click", e => {
+    AppStore.showBoxes = !AppStore.showBoxes;
+    e.currentTarget.classList.toggle("active", AppStore.showBoxes);
+    refreshFilteredViews();
+  });
+
+  document.getElementById("btnToggleGrid").addEventListener("click", e => {
+    AppStore.showGrid = !AppStore.showGrid;
+    e.currentTarget.classList.toggle("active", AppStore.showGrid);
+    refreshFilteredViews();
+  });
+
+  document.getElementById("btnToggleColorize").addEventListener("click", e => {
+    AppStore.colorizePcb = !AppStore.colorizePcb;
+    e.currentTarget.classList.toggle("active", AppStore.colorizePcb);
+    executeCurrentMode();
+  });
+
+  document.getElementById("confSlider").addEventListener("input", e => {
+    AppStore.confThreshold = Number(e.target.value);
+    document.getElementById("confValueLabel").textContent = AppStore.confThreshold.toFixed(2);
+    refreshFilteredViews();
+  });
+
+  // Batch Reset & Benchmark
+  async function resetBatch() {
+    const batchId = document.getElementById("batchIdInput").value || "BATCH-SMT-01";
+    await fetch("/api/batch-reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ batch_id: batchId })
+    });
+    document.getElementById("haltBanner").classList.remove("active");
+  }
+  document.getElementById("btnResetBatch").addEventListener("click", resetBatch);
+  document.getElementById("btnResetFromBanner").addEventListener("click", resetBatch);
+  document.getElementById("btnDismissHalt").addEventListener("click", () => {
+    document.getElementById("haltBanner").classList.remove("active");
+  });
+
+  document.getElementById("btnBenchmark").addEventListener("click", async () => {
+    const readout = document.getElementById("benchmarkReadout");
+    readout.style.display = "block";
+    readout.textContent = "Benchmarking...";
+    const res = await fetch("/api/benchmark");
+    const data = await res.json();
+    const bench = data.onnx_benchmark;
+    if (!bench) return;
+    readout.textContent = `p50 ${Number(bench.p50_ms).toFixed(2)}ms · mean ${Number(bench.mean_ms).toFixed(2)}ms · ${Number(bench.fps).toFixed(0)} FPS`;
+  });
+
+  // Bottom Trace Drawer
+  document.getElementById("btnToggleTraceDrawer").addEventListener("click", () => {
+    AppStore.drawerOpen = !AppStore.drawerOpen;
+    document.getElementById("traceDrawer").classList.toggle("open", AppStore.drawerOpen);
+  });
+  document.getElementById("btnCloseTraceDrawer").addEventListener("click", () => {
+    AppStore.drawerOpen = false;
+    document.getElementById("traceDrawer").classList.remove("open");
+  });
+
+  // Upload Modal
+  const uploadModal = document.getElementById("uploadModal");
+  document.getElementById("btnOpenUpload").addEventListener("click", () => uploadModal.classList.add("active"));
+  document.getElementById("btnCloseUpload").addEventListener("click", () => uploadModal.classList.remove("active"));
+  document.getElementById("btnCancelUpload").addEventListener("click", () => uploadModal.classList.remove("active"));
+
+  document.getElementById("uploadForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const tplFile = document.getElementById("uploadTemplateFile").files[0];
+    const tstFile = document.getElementById("uploadTestFile").files[0];
+    if (!tplFile || !tstFile) return;
+
+    uploadModal.classList.remove("active");
+    setLoading(true, "Uploading & triaging...");
+    const fd = new FormData();
+    fd.append("template_file", tplFile);
+    fd.append("test_file", tstFile);
+    fd.append("batch_id", document.getElementById("batchIdInput").value || "BATCH-UPLOAD");
+    fd.append("ipc_class", document.getElementById("ipcClassSelect").value || "Class 2");
+    fd.append("simulate_rogue_vlm", "false");
+    fd.append("colorize_pcb", String(AppStore.colorizePcb));
+
+    try {
+      const res = await fetch("/api/upload-triage", { method: "POST", body: fd });
+      const data = await res.json();
+      setLoading(false);
+      applyInspectionPayload(data);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  });
+
+  // Canvas Pan & Zoom Statechart Events
+  const viewport = document.getElementById("canvasViewport");
+  const boardSurface = document.getElementById("boardSurface");
+
+  viewport.addEventListener("mousedown", e => {
+    if (e.button !== 0 || AppStore.activeLayer === "split") return;
+    if (e.target.closest(".bbox-group, .floating-top-bar, .floating-bottom-left, .floating-bottom-right")) return;
+    CanvasStatechart.dispatch("PAN_START", { clientX: e.clientX, clientY: e.clientY });
+  });
+
+  window.addEventListener("mousemove", e => {
+    if (CanvasStatechart.state === "PANNING") {
+      CanvasStatechart.dispatch("PAN_MOVE", { clientX: e.clientX, clientY: e.clientY });
+    }
+  });
+
+  window.addEventListener("mouseup", e => {
+    if (CanvasStatechart.state === "PANNING") {
+      const clickedBlank = !Boolean(e.target.closest(".bbox-group"));
+      CanvasStatechart.dispatch("PAN_END", { clickedBlankCanvas: clickedBlank });
+    }
+  });
+
+  boardSurface.addEventListener("mousemove", e => {
+    const rect = boardSurface.getBoundingClientRect();
+    const x = Math.max(0, Math.min(639, Math.floor(((e.clientX - rect.left) / rect.width) * 640)));
+    const y = Math.max(0, Math.min(639, Math.floor(((e.clientY - rect.top) / rect.height) * 640)));
+    document.getElementById("cursorCoordReadout").textContent = `(${x}, ${y})`;
+  });
+
+  viewport.addEventListener("wheel", e => {
+    if (AppStore.activeLayer === "split") return;
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.15 : -0.15;
+    CanvasStatechart.zoom = Math.min(4.0, Math.max(0.5, Number((CanvasStatechart.zoom + delta).toFixed(2))));
+    applyCanvasTransform();
+  }, { passive: false });
+
+  document.getElementById("btnZoomIn").addEventListener("click", () => {
+    CanvasStatechart.zoom = Math.min(4.0, Number((CanvasStatechart.zoom + 0.25).toFixed(2)));
+    applyCanvasTransform();
+  });
+  document.getElementById("btnZoomOut").addEventListener("click", () => {
+    CanvasStatechart.zoom = Math.max(0.5, Number((CanvasStatechart.zoom - 0.25).toFixed(2)));
+    applyCanvasTransform();
+  });
+  document.getElementById("btnZoomReset").addEventListener("click", () => CanvasStatechart.dispatch("RESET_VIEW"));
+
+  window.addEventListener("keydown", e => {
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
+    if (e.code === "Space" && !AppStore.holdingSpaceTemplate) {
+      e.preventDefault();
+      AppStore.holdingSpaceTemplate = true;
+      updateActiveLayerImage();
+    } else if (e.code === "Escape") {
+      CanvasStatechart.dispatch("CLEAR_SELECTION");
+    } else if (e.code === "KeyR") {
+      CanvasStatechart.dispatch("RESET_VIEW");
+    }
+  });
+
+  window.addEventListener("keyup", e => {
+    if (e.code === "Space" && AppStore.holdingSpaceTemplate) {
+      AppStore.holdingSpaceTemplate = false;
+      updateActiveLayerImage();
+    }
+  });
+
+  renderClassFilterPills();
+  loadSamples();
+</script>
 </body>
 </html>
