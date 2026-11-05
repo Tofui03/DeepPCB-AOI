@@ -8,6 +8,9 @@ Experiment B:
 Experiment C:
   - Input: 3-channel composite [template, test, absdiff] (data/yolo_exp_c/deeppcb_c.yaml)
   - Crucial: disable color jitter (hsv_h=0, hsv_s=0, hsv_v=0) to preserve channel semantics
+
+Install with ``pip install -r requirements.txt -r requirements-train.txt``.
+The API image does not install ``requirements-train.txt``.
 """
 
 from __future__ import annotations

@@ -1,4 +1,6 @@
-# Runtime
+# Inference, API, and tests. Python >= 3.12. Versions are pinned.
+# opencv-python-headless: no libGL. torch and ultralytics are training-only
+# (requirements-train.txt) and are not installed with this file.
 fastapi==0.162.0
 uvicorn==0.54.0
 opencv-python-headless==5.0.0.93

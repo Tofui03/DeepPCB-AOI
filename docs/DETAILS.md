@@ -49,7 +49,9 @@ The ~0.79 ms mean in the README results table is this benchmark on an Intel Xeon
 
 ## HTTP routes
 
-`GET /`, `GET /api/samples`, `POST /api/inspect`, `POST /api/agent-triage` (alias `POST /api/triage`), `POST /api/upload-triage`, `GET /api/benchmark`, `GET /api/batch-telemetry`, `POST /api/batch-reset`.
+`GET /api/health`, `GET /`, `GET /api/samples`, `POST /api/inspect`, `POST /api/agent-triage` (alias `POST /api/triage`), `POST /api/upload-triage`, `GET /api/benchmark`, `GET /api/batch-telemetry`, `POST /api/batch-reset`.
+
+`GET /api/health` returns `status` (`ok`), `version` (the FastAPI app version), and `detector_backend`. `detector_backend` is `yolov8` when the process constructed `YOLOv8PCBDetector`, and `differential` when it constructed `ONNXPCBDetector`. It is not a copy of `DETECTOR_BACKEND`. `auto` outside pytest loads YOLOv8 when `core/vision/models/deeppcb_yolov8n_3channel.onnx` is present. pytest sets `DEEPPCB_ALLOW_MOCK` and the same `auto` value loads the differential detector. Explicit `yolo` and `yolov8` load YOLOv8. Any other value loads the differential detector.
 
 ## Layout
 
@@ -65,7 +67,9 @@ tests/          pytest
 
 ## Dataset and fixture
 
-`core/data/mock_pcb` is a two-pair fixture so `pytest` can run without the upstream images. The server does not load it. `DeepPCBDataset()` reads `data/DeepPCB/PCBData` and raises `FileNotFoundError` when that directory is missing. Tests pass `allow_mock=True`. `tests/conftest.py` sets `DEEPPCB_ALLOW_MOCK=1` before the API import, which is the only way the fixture is selected, and only when the real tree is absent.
+`core/data/mock_pcb` is a two-pair fixture so `pytest` can run without the upstream images. The server does not load it. `DeepPCBDataset` reads `data/DeepPCB/PCBData` and raises `FileNotFoundError` when that directory is missing.
+
+The API opens that loader on the first sample, inspect, triage, or benchmark request, not at import. With the directory missing, those routes return HTTP 503 and name the missing root. `GET /api/health` and `POST /api/upload-triage` do not open the dataset. `tests/conftest.py` sets `DEEPPCB_ALLOW_MOCK=1` before the API import, which is the only way the fixture is selected, and only when the real tree is absent.
 
 To run the server, or the 1,500-pair checks:
 

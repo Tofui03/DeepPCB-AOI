@@ -1,0 +1,12 @@
+# Training and Ultralytics evaluation only.
+# scripts/train_yolo.py and Method B/C in scripts/eval_deeppcb.py.
+# The API image installs requirements.txt and does not install this file.
+#
+# ultralytics depends on the GUI package opencv-python. Keep that install out of
+# the API environment, which uses opencv-python-headless.
+#
+#   pip install -r requirements.txt -r requirements-train.txt
+#
+torch==2.15.0
+torchvision==0.29.2
+ultralytics==8.4.202

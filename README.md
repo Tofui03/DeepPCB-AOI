@@ -38,23 +38,46 @@ Visualized failure samples and bounding box overlays are archived under `docs/ba
 
 ## Quick start
 
-Python 3.10 or newer.
+Python 3.12 or newer (`numpy==2.5.4`).
+
+### Docker
+
+The image installs `requirements.txt` only (`opencv-python-headless`, ONNX Runtime). It does not include the DeepPCB dataset or `requirements-train.txt`. `DETECTOR_BACKEND=yolov8` is set in the image. `GET /api/health` reports the detector that was loaded (`yolov8` or `differential`), not the environment variable.
+
+```bash
+docker build -t deeppcb-aoi .
+docker run --rm -p 8000:8000 deeppcb-aoi
+```
+
+`POST /api/upload-triage` and `GET /api/health` work with no dataset mounted. Sample routes (`/api/samples`, `/api/inspect`, `/api/agent-triage`, `/api/benchmark`) return 503 until the corpus is mounted:
+
+```bash
+docker run --rm -p 8000:8000 -v "$PWD/data/DeepPCB:/app/data/DeepPCB:ro" deeppcb-aoi
+```
+
+### Local virtualenv
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 git clone --depth 1 https://github.com/tangsanli5201/DeepPCB.git data/DeepPCB
-uvicorn api.main:app --host 0.0.0.0 --port 8000
+DETECTOR_BACKEND=yolov8 uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://localhost:8000/`.
+Open `http://localhost:8000/`. Without `DETECTOR_BACKEND`, a non-test process uses YOLOv8 when `core/vision/models/deeppcb_yolov8n_3channel.onnx` is present, and the differential ONNX detector otherwise. `pytest` always uses the differential detector unless `DETECTOR_BACKEND` is `yolo` or `yolov8`.
+
+Training (`scripts/train_yolo.py`) and Ultralytics evaluation use a separate file:
+
+```bash
+pip install -r requirements-train.txt
+```
 
 ```bash
 pytest
 ```
 
-Tests run without the dataset via a small fixture in `core/data/mock_pcb`, used only when `data/DeepPCB/PCBData` is absent.
+Tests run without the dataset via a small fixture in `core/data/mock_pcb`, used only when `data/DeepPCB/PCBData` is absent. The server starts without that tree: upload and health keep working, and sample routes return 503.
 
 ## Results
 
@@ -63,7 +86,7 @@ Tests run without the dataset via a small fixture in `core/data/mock_pcb`, used 
 | Stage 1 mean latency | ~0.79 ms on an Intel Xeon CPU (synthetic 640×640 pair) |
 | Stage 1 test gate | 15 ms mean |
 | Defect classes | 6 |
-| Tests | 87 passing |
+| Tests | 99 passing |
 
 ## How it works
 
