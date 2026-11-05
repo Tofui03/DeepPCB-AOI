@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -40,23 +41,119 @@ app = FastAPI(
 
 # Mock boards are test-only. pytest sets DEEPPCB_ALLOW_MOCK; the server does not.
 _IS_TEST_ENV = os.environ.get("DEEPPCB_ALLOW_MOCK") == "1"
-dataset = DeepPCBDataset(allow_mock=_IS_TEST_ENV)
 
-DETECTOR_BACKEND = os.environ.get("DETECTOR_BACKEND", "auto").lower()
-if DETECTOR_BACKEND in ("yolo", "yolov8") or (
-    DETECTOR_BACKEND == "auto" and DEFAULT_YOLO_ONNX_PATH.is_file() and not _IS_TEST_ENV
+
+def _select_yolov8(requested: str, *, weights_present: bool, is_test_env: bool) -> bool:
+    """Choose YOLOv8 from the request, the weights file, and whether this is pytest.
+
+    ``yolo`` and ``yolov8`` select YOLOv8. ``auto`` selects it only when the ONNX
+    file is present and this process is not the test suite. Every other value,
+    including ``auto`` during pytest, selects the differential ONNX detector.
+    """
+    normalized = requested.strip().lower()
+    if normalized in {"yolo", "yolov8"}:
+        return True
+    return normalized == "auto" and weights_present and not is_test_env
+
+
+_REQUESTED_DETECTOR_BACKEND = os.environ.get("DETECTOR_BACKEND", "auto")
+if _select_yolov8(
+    _REQUESTED_DETECTOR_BACKEND,
+    weights_present=DEFAULT_YOLO_ONNX_PATH.is_file(),
+    is_test_env=_IS_TEST_ENV,
 ):
     detector = YOLOv8PCBDetector()
 else:
     detector = ONNXPCBDetector(score_threshold=145.0)
 
+
+def detector_backend_name(active: object) -> str:
+    """Return the detector that was constructed, not the ``DETECTOR_BACKEND`` string.
+
+    ``yolov8`` is ``YOLOv8PCBDetector``. ``differential`` is the differential ONNX
+    baseline (``ONNXPCBDetector``). ``auto`` and the ``yolo`` alias are not returned.
+    """
+    if isinstance(active, YOLOv8PCBDetector):
+        return "yolov8"
+    if isinstance(active, ONNXPCBDetector):
+        return "differential"
+    raise TypeError(f"Unknown detector type: {type(active).__name__}")
+
+
+class _LazyDeepPCBDataset:
+    """Open the DeepPCB tree on first use so import succeeds with no corpus on disk.
+
+    ``/api/health`` and ``/api/upload-triage`` never call ``load``.
+    """
+
+    def __init__(self) -> None:
+        self._dataset: DeepPCBDataset | None = None
+        self._load_error: FileNotFoundError | None = None
+        self._lock = threading.Lock()
+
+    def load(self) -> DeepPCBDataset:
+        if self._dataset is not None:
+            return self._dataset
+        with self._lock:
+            if self._dataset is not None:
+                return self._dataset
+            if self._load_error is not None:
+                raise self._load_error
+            try:
+                self._dataset = DeepPCBDataset(allow_mock=_IS_TEST_ENV)
+            except FileNotFoundError as exc:
+                self._load_error = exc
+                raise
+            return self._dataset
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.load(), name)
+
+
+dataset = _LazyDeepPCBDataset()
+
 batch_store = BatchTelemetryStore()
 agent_graph = PCBAOIAgentGraph(detector=detector, batch_store=batch_store)
 
-_ALL_SAMPLES: list[DeepPCBSample] = dataset.test_samples + dataset.trainval_samples
-_SAMPLE_INDEX: dict[str, DeepPCBSample] = {s.sample_id: s for s in _ALL_SAMPLES}
-_ALL_GROUPS: list[str] = sorted({s.template_path.parts[-3] for s in _ALL_SAMPLES})
+_ALL_SAMPLES: list[DeepPCBSample] | None = None
+_SAMPLE_INDEX: dict[str, DeepPCBSample] | None = None
+_ALL_GROUPS: list[str] | None = None
+_index_lock = threading.Lock()
 _SAMPLE_META_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _dataset_unavailable_detail(exc: FileNotFoundError) -> str:
+    return (
+        f"{exc}. "
+        "Sample routes need the DeepPCB dataset: /api/samples, /api/inspect, "
+        "/api/agent-triage, /api/triage, and /api/benchmark. "
+        "GET /api/health and POST /api/upload-triage work without it."
+    )
+
+
+def _require_dataset() -> DeepPCBDataset:
+    """Return the loaded dataset, or HTTP 503 when the corpus is not on disk."""
+    try:
+        return dataset.load()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=_dataset_unavailable_detail(exc)) from exc
+
+
+def _ensure_sample_index(
+    ds: DeepPCBDataset,
+) -> tuple[list[DeepPCBSample], dict[str, DeepPCBSample], list[str]]:
+    """Build the sample id index once the dataset has loaded."""
+    global _ALL_SAMPLES, _SAMPLE_INDEX, _ALL_GROUPS
+    if _ALL_SAMPLES is not None and _SAMPLE_INDEX is not None and _ALL_GROUPS is not None:
+        return _ALL_SAMPLES, _SAMPLE_INDEX, _ALL_GROUPS
+    with _index_lock:
+        if _ALL_SAMPLES is None or _SAMPLE_INDEX is None or _ALL_GROUPS is None:
+            samples = ds.test_samples + ds.trainval_samples
+            _ALL_SAMPLES = samples
+            _SAMPLE_INDEX = {sample.sample_id: sample for sample in samples}
+            _ALL_GROUPS = sorted({sample.template_path.parts[-3] for sample in samples})
+    assert _ALL_SAMPLES is not None and _SAMPLE_INDEX is not None and _ALL_GROUPS is not None
+    return _ALL_SAMPLES, _SAMPLE_INDEX, _ALL_GROUPS
 
 
 def _get_sample_metadata(sample: DeepPCBSample) -> dict[str, Any]:
@@ -136,10 +233,25 @@ class BatchResetRequest(BaseModel):
     )
 
 
+class HealthResponse(BaseModel):
+    """Liveness payload for `GET /api/health`."""
+
+    status: str = Field(description='Process liveness. "ok" when the server is handling requests.')
+    version: str = Field(description="FastAPI application version.")
+    detector_backend: str = Field(
+        description=(
+            'Detector constructed at startup: "yolov8" or "differential" '
+            "(the differential ONNX baseline). Not the DETECTOR_BACKEND environment variable."
+        ),
+    )
+
+
 def _resolve_sample(sample_id: str | None) -> DeepPCBSample:
+    ds = _require_dataset()
+    _samples, index, _groups = _ensure_sample_index(ds)
     if not sample_id:
-        return dataset.test_samples[0]
-    sample = _SAMPLE_INDEX.get(sample_id)
+        return ds.test_samples[0]
+    sample = index.get(sample_id)
     if sample is None:
         raise HTTPException(
             status_code=404,
@@ -268,6 +380,16 @@ def _execute_triage_pipeline(
     }
 
 
+@app.get("/api/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    """Report liveness, API version, and the detector loaded in this process."""
+    return HealthResponse(
+        status="ok",
+        version=app.version,
+        detector_backend=detector_backend_name(detector),
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def serve_console() -> HTMLResponse:
     """Serve ``web/index.html``."""
@@ -284,12 +406,14 @@ def list_curated_samples(
     limit: int = Query(default=100, ge=1, le=1500, description="Max samples to return."),
 ) -> dict[str, Any]:
     """Return DeepPCB samples across all 11 PCB groups with optional group and defect_class filtering."""
+    ds = _require_dataset()
+    all_samples, _index, groups = _ensure_sample_index(ds)
     if split == "test":
-        pool = dataset.test_samples
+        pool = ds.test_samples
     elif split == "trainval":
-        pool = dataset.trainval_samples
+        pool = ds.trainval_samples
     elif split == "all":
-        pool = _ALL_SAMPLES
+        pool = all_samples
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported split={split!r}.")
 
@@ -320,9 +444,9 @@ def list_curated_samples(
 
     return {
         "samples": results,
-        "groups": _ALL_GROUPS,
-        "total_available": len(_ALL_SAMPLES),
-        "total_test_samples": len(dataset.test_samples),
+        "groups": groups,
+        "total_available": len(all_samples),
+        "total_test_samples": len(ds.test_samples),
     }
 
 
@@ -330,7 +454,7 @@ def list_curated_samples(
 def inspect_stage1(req: InspectRequest) -> dict[str, Any]:
     """Execute Stage 1 deterministic ONNX edge inspection and return report + base64 images."""
     sample = _resolve_sample(req.sample_id)
-    template_img, test_img, gt_boxes = dataset.load_sample(sample)
+    template_img, test_img, gt_boxes = _require_dataset().load_sample(sample)
     if req.clean_board_mode:
         test_img = template_img.copy()
 
@@ -358,7 +482,7 @@ def inspect_stage1(req: InspectRequest) -> dict[str, Any]:
 def run_agent_triage(req: AgentTriageRequest) -> dict[str, Any]:
     """Execute the full 4-Stage DeepPCB-AOI State Graph with trace and SQLite batch telemetry."""
     sample = _resolve_sample(req.sample_id)
-    template_img, test_img, gt_boxes = dataset.load_sample(sample)
+    template_img, test_img, gt_boxes = _require_dataset().load_sample(sample)
 
     return _execute_triage_pipeline(
         template_img=template_img,
@@ -424,8 +548,9 @@ async def upload_and_triage(
 @app.get("/api/benchmark")
 def get_benchmark(num_runs: int = Query(default=30, ge=5, le=200)) -> dict[str, Any]:
     """Run live Stage 1 ONNX latency benchmark and return dataset zero-leakage SHA-256 audit."""
+    ds = _require_dataset()
     perf = detector.benchmark(num_runs=num_runs)
-    split_audit = dataset.verify_zero_leakage()
+    split_audit = ds.verify_zero_leakage()
     return {
         "onnx_benchmark": perf,
         "dataset_audit": split_audit,

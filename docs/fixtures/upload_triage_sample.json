@@ -1,0 +1,281 @@
+{
+  "sample_id": "UPLOAD:20085000_test",
+  "batch_id": "BATCH-UPLOAD",
+  "ipc_class": "Class 2",
+  "clean_board_mode": false,
+  "simulate_rogue_vlm": false,
+  "colorize_pcb": false,
+  "board_disposition": "SCRAP",
+  "line_halted": false,
+  "gt_defect_count": 0,
+  "report": {
+    "stage1_latency_ms": 53.672,
+    "detections": [
+      {
+        "x1": 177,
+        "y1": 101,
+        "x2": 226,
+        "y2": 196,
+        "defect_class": "Short",
+        "confidence": 0.9164,
+        "area_px": 4655,
+        "relative_area_pct": 1.1365
+      },
+      {
+        "x1": 378,
+        "y1": 275,
+        "x2": 441,
+        "y2": 322,
+        "defect_class": "Open",
+        "confidence": 0.8241,
+        "area_px": 2961,
+        "relative_area_pct": 0.7229
+      },
+      {
+        "x1": 400,
+        "y1": 386,
+        "x2": 443,
+        "y2": 432,
+        "defect_class": "Open",
+        "confidence": 0.7467,
+        "area_px": 1978,
+        "relative_area_pct": 0.4829
+      }
+    ],
+    "fast_path_pass": false,
+    "decisions": [
+      {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "electrical_failure_risk": "Unintended conductive bridge between traces risking dead short, overcurrent, and thermal runaway.",
+        "root_cause_hypothesis": "Under-etching, exhausted etchant bath chemistry, or developer residue between adjacent traces.",
+        "recommended_corrective_action": "Scrap or isolate bridged board; titrate copper etchant solution and verify conveyor dwell speed.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    ]
+  },
+  "trace": [
+    {
+      "stage": "Stage 1: ONNX Edge Vision",
+      "latency_ms": 53.672,
+      "num_detections": 3,
+      "execution_provider": "CPUExecutionProvider"
+    },
+    {
+      "stage": "Stage 2: Ground-Truth Tools",
+      "defect_index": 0,
+      "defect_class": "Short",
+      "roi_shape": [
+        159,
+        113
+      ],
+      "ipc_compliance": {
+        "defect_class": "Short",
+        "ipc_class": "Class 2",
+        "violates_ipc": true,
+        "ipc_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "max_allowed_px": 0,
+        "measured_px": 4655
+      },
+      "batch_trend": {
+        "batch_id": "BATCH-UPLOAD",
+        "defect_class": "Short",
+        "occurrence_count": 1,
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "stage": "Stage 3: Deterministic Triage (No External VLM Configured)",
+      "vlm_attempts": 0,
+      "used_fallback": true,
+      "last_error": null,
+      "raw_decision": {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "electrical_failure_risk": "Unintended conductive bridge between traces risking dead short, overcurrent, and thermal runaway.",
+        "root_cause_hypothesis": "Under-etching, exhausted etchant bath chemistry, or developer residue between adjacent traces.",
+        "recommended_corrective_action": "Scrap or isolate bridged board; titrate copper etchant solution and verify conveyor dwell speed.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      "defect_index": 0
+    },
+    {
+      "stage": "Stage 4: Safety Guardrails",
+      "defect_index": 0,
+      "guardrail_overridden": false,
+      "override_reason": null,
+      "final_decision": {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "electrical_failure_risk": "Unintended conductive bridge between traces risking dead short, overcurrent, and thermal runaway.",
+        "root_cause_hypothesis": "Under-etching, exhausted etchant bath chemistry, or developer residue between adjacent traces.",
+        "recommended_corrective_action": "Scrap or isolate bridged board; titrate copper etchant solution and verify conveyor dwell speed.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    },
+    {
+      "stage": "Stage 2: Ground-Truth Tools",
+      "defect_index": 1,
+      "defect_class": "Open",
+      "roi_shape": [
+        111,
+        127
+      ],
+      "ipc_compliance": {
+        "defect_class": "Open",
+        "ipc_class": "Class 2",
+        "violates_ipc": true,
+        "ipc_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "max_allowed_px": 0,
+        "measured_px": 2961
+      },
+      "batch_trend": {
+        "batch_id": "BATCH-UPLOAD",
+        "defect_class": "Open",
+        "occurrence_count": 1,
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "stage": "Stage 3: Deterministic Triage (No External VLM Configured)",
+      "vlm_attempts": 0,
+      "used_fallback": true,
+      "last_error": null,
+      "raw_decision": {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      "defect_index": 1
+    },
+    {
+      "stage": "Stage 4: Safety Guardrails",
+      "defect_index": 1,
+      "guardrail_overridden": false,
+      "override_reason": null,
+      "final_decision": {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    },
+    {
+      "stage": "Stage 2: Ground-Truth Tools",
+      "defect_index": 2,
+      "defect_class": "Open",
+      "roi_shape": [
+        110,
+        107
+      ],
+      "ipc_compliance": {
+        "defect_class": "Open",
+        "ipc_class": "Class 2",
+        "violates_ipc": true,
+        "ipc_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "max_allowed_px": 0,
+        "measured_px": 1978
+      },
+      "batch_trend": {
+        "batch_id": "BATCH-UPLOAD",
+        "defect_class": "Open",
+        "occurrence_count": 2,
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "stage": "Stage 3: Deterministic Triage (No External VLM Configured)",
+      "vlm_attempts": 0,
+      "used_fallback": true,
+      "last_error": null,
+      "raw_decision": {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      "defect_index": 2
+    },
+    {
+      "stage": "Stage 4: Safety Guardrails",
+      "defect_index": 2,
+      "guardrail_overridden": false,
+      "override_reason": null,
+      "final_decision": {
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    }
+  ],
+  "batch_summary": [
+    {
+      "batch_id": "BATCH-UPLOAD",
+      "defect_class": "Open",
+      "occurrence_count": 2,
+      "threshold_exceeded": false
+    },
+    {
+      "batch_id": "BATCH-UPLOAD",
+      "defect_class": "Short",
+      "occurrence_count": 1,
+      "threshold_exceeded": false
+    }
+  ],
+  "template_b64": "<omitted>",
+  "test_b64": "<omitted>",
+  "diff_b64": "<omitted>"
+}

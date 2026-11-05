@@ -12,6 +12,9 @@ Supports:
   - Class-agnostic metrics (pure localization P, R, F1)
   - Latency profiling (mean, p50, p95 ms per frame)
   - Automatic failure analysis and visualization of Top Bad Cases
+
+Method A uses the inference stack (``requirements.txt``). Methods B and C import
+ultralytics; install ``requirements-train.txt`` for those runs.
 """
 
 from __future__ import annotations
