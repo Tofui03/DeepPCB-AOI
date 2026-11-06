@@ -18,6 +18,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import platform
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -288,23 +291,37 @@ def run_evaluation(
     return summary
 
 
-def make_onnx_method_a_detector():
+def onnx_providers_for_device(device: str = "0") -> list[str]:
+    """Map the CLI ``--device`` value to an ONNX Runtime provider priority list."""
+    if str(device).strip().lower() == "cpu":
+        return ["CPUExecutionProvider"]
+    return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+
+
+def make_onnx_method_a_detector(device: str = "0"):
+    """Build the Method A inference fn.
+
+    Returns ``(infer_fn, execution_provider)`` where ``execution_provider`` is the
+    provider ONNX Runtime actually selected (not just the requested device).
+    """
     from core.vision.onnx_detector import ONNXPCBDetector
-    detector = ONNXPCBDetector(score_threshold=28.0)
+    detector = ONNXPCBDetector(score_threshold=28.0, providers=onnx_providers_for_device(device))
 
     def _infer(temp_img: np.ndarray, test_img: np.ndarray) -> list[Box]:
         detections, _ = detector.detect(temp_img, test_img)
         return [Box(d.x1, d.y1, d.x2, d.y2, d.defect_class, d.confidence) for d in detections]
 
-    return _infer
+    return _infer, detector.execution_provider
 
 
-def make_yolo_detector(weights_path: Path, mode: str = "b", conf: float = 0.25):
+def make_yolo_detector(weights_path: Path, mode: str = "b", conf: float = 0.25, device: str = "0"):
     """Factory for YOLOv8 model inference.
 
     mode:
       'b' -> single test image
       'c' -> 3-channel composite [template, test, absdiff]
+    device:
+      '0', 'cuda', 'cpu', etc.
     """
     from ultralytics import YOLO
     model = YOLO(str(weights_path))
@@ -319,7 +336,7 @@ def make_yolo_detector(weights_path: Path, mode: str = "b", conf: float = 0.25):
         else:
             raise ValueError(f"Unknown mode {mode}")
 
-        results = model.predict(source=inp, imgsz=640, conf=conf, verbose=False)
+        results = model.predict(source=inp, imgsz=640, conf=conf, device=device, verbose=False)
         boxes = []
         if results and len(results) > 0:
             r = results[0]
@@ -334,9 +351,50 @@ def make_yolo_detector(weights_path: Path, mode: str = "b", conf: float = 0.25):
     return _infer
 
 
+def get_system_metadata(device: str) -> dict[str, Any]:
+    """Collect git commit, device details, and environment info for reproducibility."""
+    commit = "unknown"
+    try:
+        commit = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL)
+            .decode()
+            .strip()
+        )
+    except Exception:
+        pass
+
+    device_name = "CPU"
+    if device not in ["cpu", "CPU"]:
+        try:
+            import torch
+            if torch.cuda.is_available():
+                device_name = torch.cuda.get_device_name(0)
+        except Exception:
+            pass
+    else:
+        # Try to get CPU model name
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "model name" in line:
+                        device_name = line.split(":", 1)[1].strip()
+                        break
+        except Exception:
+            device_name = platform.processor() or "CPU"
+
+    return {
+        "git_commit": commit,
+        "target_device": device,
+        "device_name": device_name,
+        "platform": platform.platform(),
+        "python_version": platform.python_version(),
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluate DeepPCB Defect Detectors")
     parser.add_argument("--method", choices=["a", "b", "c", "all"], default="a", help="Method to evaluate")
+    parser.add_argument("--device", type=str, default="0", help="Inference device: '0' for GPU, 'cpu' for CPU")
     parser.add_argument("--weights-b", type=Path, default=None, help="Weights path for YOLO Exp B")
     parser.add_argument("--weights-c", type=Path, default=None, help="Weights path for YOLO Exp C")
     parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold for YOLO")
@@ -347,32 +405,37 @@ def main():
 
     test_manifest = args.pcb_root / "test.txt"
     all_results = {}
+    metadata = get_system_metadata(args.device)
 
     if args.method in ["a", "all"]:
         print("\n" + "=" * 50)
         print("Evaluating Method A (Differential ONNX Detector Baseline)...")
         print("=" * 50)
-        fn_a = make_onnx_method_a_detector()
+        fn_a, ep_a = make_onnx_method_a_detector(args.device)
+        print(f"Method A ONNX Runtime execution provider: {ep_a}")
         bad_dir = args.bad_cases_dir / "method_a"
         res_a = run_evaluation(fn_a, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
+        res_a["metadata"] = {**metadata, "execution_provider": ep_a}
         all_results["Method_A_Differential_ONNX"] = res_a
 
     if args.method in ["b", "all"] and args.weights_b:
         print("\n" + "=" * 50)
-        print(f"Evaluating Method B (YOLOv8n Single Image: {args.weights_b})...")
+        print(f"Evaluating Method B (YOLOv8n Single Image: {args.weights_b}) on device={args.device}...")
         print("=" * 50)
-        fn_b = make_yolo_detector(args.weights_b, mode="b", conf=args.conf)
+        fn_b = make_yolo_detector(args.weights_b, mode="b", conf=args.conf, device=args.device)
         bad_dir = args.bad_cases_dir / "method_b"
         res_b = run_evaluation(fn_b, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
+        res_b["metadata"] = {**metadata, "yolo_device": args.device}
         all_results["Method_B_YOLOv8n_SingleImage"] = res_b
 
     if args.method in ["c", "all"] and args.weights_c:
         print("\n" + "=" * 50)
-        print(f"Evaluating Method C (YOLOv8n 3-Channel Composite: {args.weights_c})...")
+        print(f"Evaluating Method C (YOLOv8n 3-Channel Composite: {args.weights_c}) on device={args.device}...")
         print("=" * 50)
-        fn_c = make_yolo_detector(args.weights_c, mode="c", conf=args.conf)
+        fn_c = make_yolo_detector(args.weights_c, mode="c", conf=args.conf, device=args.device)
         bad_dir = args.bad_cases_dir / "method_c"
         res_c = run_evaluation(fn_c, test_manifest, args.pcb_root, visualize_bad_cases_dir=bad_dir)
+        res_c["metadata"] = {**metadata, "yolo_device": args.device}
         all_results["Method_C_YOLOv8n_3Channel"] = res_c
 
     # Save summary json
@@ -382,6 +445,7 @@ def main():
     # Print markdown table
     print("\n" + "=" * 80)
     print("FINAL COMPARISON TABLE (IoU=0.33 DeepPCB Benchmark Standard)")
+    print(f"Device: {metadata['device_name']} ({metadata['target_device']}) | Commit: {metadata['git_commit'][:8]}")
     print("=" * 80)
     print(f"{'Method':<32} | {'Precision':<9} | {'Recall':<9} | {'F1':<9} | {'Mean Latency':<12}")
     print("-" * 80)

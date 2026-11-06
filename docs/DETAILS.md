@@ -4,12 +4,12 @@ Notes behind the [DeepPCB-AOI](../README.md) front page.
 
 ## Pipeline
 
-1. **Detect.** `core/vision` expects 640×640 inputs and does not resize. It runs the ONNX graph and groups high-scoring cells with connected components. Class comes from the sign of `template - test` (missing copper vs extra copper), plus area, aspect ratio, and fill. Non-maximum suppression drops overlaps. No boxes means `disposition = PASS` and stages 2–4 do not run.
+1. **Detect.** `core/vision` expects 640×640 inputs and does not resize. When `DETECTOR_BACKEND=yolov8`, `YOLOv8PCBDetector` stacks `[diff, test, template]` into a normalized 3-channel tensor (`[1, 3, 640, 640]`), runs the learned ONNX model, and applies class-aware NMS. In fallback mode (`DETECTOR_BACKEND=diff`), `ONNXPCBDetector` runs the 696-byte difference graph, groups high-scoring cells with connected components, labels each box from the sign of `template - test` plus geometry, and drops overlaps. No boxes means `disposition = PASS` and stages 2–4 do not run.
 2. **Rules and batch history.** `core/tools` compares box area with the table below and increments a SQLite count for `(batch_id, defect_class)`.
 3. **Optional model triage.** If a callable is configured, its output must validate as `InspectionDecision`. It is tried at most three times (`MAX_VLM_RETRIES = 2`). Anything else falls back to the rule engine. The default server does not call an external model. The callable does not edit box coordinates.
 4. **Overrides** in `core/agent/guardrails.py`. Open and Short cannot be PASS (forced to SCRAP / CRITICAL). An over-limit box cannot be PASS. The third occurrence of the same class in a batch sets `halt_production_line`.
 
-The editable source for the pipeline diagram is [system-architecture.excalidraw](architecture/system-architecture.excalidraw). One detected box follows [ipc-decision-flowchart.svg](architecture/ipc-decision-flowchart.svg).
+The editable HTML source for the pipeline diagram is [system-architecture.html](architecture/system-architecture.html) (exported to [system-architecture.svg](architecture/system-architecture.svg)). One detected box follows [ipc-decision-flowchart.html](architecture/ipc-decision-flowchart.html) ([ipc-decision-flowchart.svg](architecture/ipc-decision-flowchart.svg)).
 
 ## Area limits
 
@@ -28,24 +28,23 @@ The editable source for the pipeline diagram is [system-architecture.excalidraw]
 
 Batch halt threshold: 3 occurrences of the same class (`BATCH_HALT_THRESHOLD`).
 
-## ONNX file
+## ONNX models
 
-The checked-in ONNX file is a fixed difference graph. `core/vision/models/deeppcb_diff_detector.onnx` is 696 bytes, small enough to keep in normal git. The graph is IR version 8, opset 13:
+Two Stage 1 detector backends live in `core/vision/`:
 
-- inputs `template`, `test`: float32 `[1, 1, 640, 640]`
-- `Sub`, then `Abs`
-- two stride-4, kernel-4 convolutions (box average)
-- outputs `diff_score`, `polarity_map`: float32 `[1, 1, 160, 160]`
+1. **`YOLOv8PCBDetector` (`core/vision/yolo_detector.py`, activated with `DETECTOR_BACKEND=yolov8`)**:
+   - Checked-in weights: `core/vision/models/deeppcb_yolov8n_3channel.onnx` (and single-image ablation baseline `core/vision/models/deeppcb_yolov8n_single.onnx`).
+   - Input tensor: 3-channel composite `[template, test, absdiff]` normalized to `float32 [1, 3, 640, 640]`.
+   - Post-processing: confidence filtering (`conf_threshold=0.25`) and class-aware NMS (`iou_threshold=0.45`).
+2. **`ONNXPCBDetector` (`core/vision/onnx_detector.py`, fallback heuristic baseline)**:
+   - Checked-in graph: `core/vision/models/deeppcb_diff_detector.onnx` (696 bytes, IR version 8, opset 13).
+   - Inputs `template`, `test`: `float32 [1, 1, 640, 640]`; runs `Sub`, `Abs`, and two stride-4, kernel-4 box-average convolutions to output `diff_score` and `polarity_map` (`[1, 1, 160, 160]`).
+   - `ONNXPCBDetector` synthesizes the same graph if the file is missing (`build_differential_onnx_model`). The API constructs it with `score_threshold=145` (class default is `28`).
 
-`ONNXPCBDetector` writes the same graph if the file is missing (`build_differential_onnx_model`). Nothing in this repo trains weights.
+## Benchmark & Evaluation
 
-The API constructs the detector with `score_threshold=145`. The class default is 28. Cells below the threshold are ignored before connected components.
-
-## Benchmark
-
-`ONNXPCBDetector.benchmark` times Stage 1 `detect` on one synthetic 640×640 pair (two dark rectangles) and returns `mean_ms`, `p50_ms`, `p95_ms`, `p99_ms`, and `fps`. `GET /api/benchmark` calls that method and returns those latency percentiles. Tests and the `sla_met` flag pass when `mean_ms < 15`. That call times `detect` as a whole. It does not separately time the fast path, non-maximum suppression, SQLite, guardrails, or a VLM. This repo has no CUDA or TensorRT benchmark.
-
-The ~0.79 ms mean in the README results table is this benchmark on an Intel Xeon.
+- **Held-out dataset evaluation (`scripts/eval_deeppcb.py`)**: Evaluates Methods A, B, and C across all 500 test pairs (`data/DeepPCB/PCBData/test.txt`, 3,140 ground-truth defects) at `IoU=0.33` and `IoU=0.50`, recording per-class Precision/Recall/F1, GPU/CPU latencies, and hardware metadata to `evaluation_results.json`.
+- **Stage 1 synthetic micro-benchmark (`GET /api/benchmark`)**: Calls `detector.benchmark()` on one synthetic 640×640 pair and returns `mean_ms`, `p50_ms`, `p95_ms`, `p99_ms`, and `fps`. Tests and the `sla_met` flag pass when `mean_ms < 15`.
 
 ## HTTP routes
 
@@ -89,11 +88,11 @@ SQLite state defaults to `data/batch_telemetry.db` (gitignored). Tests use `:mem
 
 ## Tests
 
-Coverage is the schema, the area table, batch counts, guardrail overrides (including a stub model that tries to PASS a short), upload decoding, and Stage 1 latency against the gate above. There is no held-out accuracy eval.
+`pytest` covers Pydantic schemas, the IPC pixel-area table, SQLite batch counts, guardrail overrides (including a stub model that tries to PASS a short), image upload decoding, `YOLOv8PCBDetector` 3-channel inference and fast-path bypass, and Stage 1 latency against the `<15 ms` gate. Held-out accuracy across the 500 test pairs is evaluated separately via `scripts/eval_deeppcb.py`.
 
 ## Limitations
 
-- Class labels are thresholds in `_classify_defect_morphology`, not a learned classifier. A different `score_threshold` changes which blobs survive.
+- In the default `ONNXPCBDetector` fallback, class labels come from geometry thresholds in `_classify_defect_morphology`. Set `DETECTOR_BACKEND=yolov8` to use the learned 3-channel detector (`0.9401 F1`).
 - The clause strings are names for the pixel table above.
-- No language model is configured. `simulate_rogue_vlm` sends a fixed PASS payload so the override can be seen.
+- No language model is configured by default. `simulate_rogue_vlm` sends a fixed PASS payload so the guardrail override can be verified.
 - The console, dataset, and batch database resolve from the repo root: `web/index.html`, `data/DeepPCB/PCBData`, and `data/batch_telemetry.db`.
