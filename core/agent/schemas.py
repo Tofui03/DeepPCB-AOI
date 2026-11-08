@@ -166,6 +166,14 @@ class InspectionDecision(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    detection_index: int | None = Field(
+        default=None,
+        description="Index of the corresponding BoundingBoxDetection in the report (BC-2).",
+    )
+    defect_class: DefectClass | None = Field(
+        default=None,
+        description="Canonical defect class corresponding to this decision (BC-2).",
+    )
     disposition: Disposition = Field(
         ...,
         description="Final board disposition: 'PASS', 'REWORK', or 'SCRAP'.",

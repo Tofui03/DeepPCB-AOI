@@ -39,6 +39,7 @@ def build_deterministic_fallback_decision(
     bbox: BoundingBoxDetection,
     ipc_result: IPCComplianceResult,
     batch_result: BatchTrendResult,
+    detection_index: int | None = None,
 ) -> InspectionDecision:
     """Build an ``InspectionDecision`` from the rule result and batch count."""
     meta = get_ipc_metadata(bbox.defect_class)
@@ -54,6 +55,8 @@ def build_deterministic_fallback_decision(
         severity = "LOW"
 
     return InspectionDecision(
+        detection_index=detection_index,
+        defect_class=bbox.defect_class,
         disposition=disposition,
         severity=severity,
         ipc_standard_clause=ipc_result.ipc_clause,
@@ -215,6 +218,9 @@ class PCBAOIAgentGraph:
                 bbox=bbox,
                 ipc_result=ipc_result,
                 batch_result=batch_result,
+            )
+            final_decision = final_decision.model_copy(
+                update={"detection_index": idx, "defect_class": bbox.defect_class}
             )
             trace.append(
                 {

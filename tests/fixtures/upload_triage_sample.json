@@ -1,0 +1,299 @@
+{
+  "sample_id": "UPLOAD:20085000_test",
+  "batch_id": "BATCH-FIXTURE",
+  "ipc_class": "Class 2",
+  "clean_board_mode": false,
+  "simulate_rogue_vlm": false,
+  "colorize_pcb": false,
+  "board_disposition": "SCRAP",
+  "line_halted": false,
+  "gt_defect_count": 0,
+  "report": {
+    "stage1_latency_ms": 86.3474,
+    "detections": [
+      {
+        "x1": 177,
+        "y1": 101,
+        "x2": 226,
+        "y2": 196,
+        "defect_class": "Short",
+        "confidence": 0.9164,
+        "area_px": 4655,
+        "relative_area_pct": 1.1365
+      },
+      {
+        "x1": 378,
+        "y1": 275,
+        "x2": 441,
+        "y2": 322,
+        "defect_class": "Open",
+        "confidence": 0.8241,
+        "area_px": 2961,
+        "relative_area_pct": 0.7229
+      },
+      {
+        "x1": 400,
+        "y1": 386,
+        "x2": 443,
+        "y2": 432,
+        "defect_class": "Open",
+        "confidence": 0.7467,
+        "area_px": 1978,
+        "relative_area_pct": 0.4829
+      }
+    ],
+    "fast_path_pass": false,
+    "decisions": [
+      {
+        "detection_index": 0,
+        "defect_class": "Short",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "electrical_failure_risk": "Unintended conductive bridge between traces risking dead short, overcurrent, and thermal runaway.",
+        "root_cause_hypothesis": "Under-etching, exhausted etchant bath chemistry, or developer residue between adjacent traces.",
+        "recommended_corrective_action": "Scrap or isolate bridged board; titrate copper etchant solution and verify conveyor dwell speed.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      {
+        "detection_index": 1,
+        "defect_class": "Open",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      {
+        "detection_index": 2,
+        "defect_class": "Open",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    ]
+  },
+  "trace": [
+    {
+      "stage": "Stage 1: ONNX Edge Vision",
+      "latency_ms": 86.3474,
+      "num_detections": 3,
+      "execution_provider": "CPUExecutionProvider"
+    },
+    {
+      "stage": "Stage 2: Ground-Truth Tools",
+      "defect_index": 0,
+      "defect_class": "Short",
+      "roi_shape": [
+        159,
+        113
+      ],
+      "ipc_compliance": {
+        "defect_class": "Short",
+        "ipc_class": "Class 2",
+        "violates_ipc": true,
+        "ipc_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "max_allowed_px": 0,
+        "measured_px": 4655
+      },
+      "batch_trend": {
+        "batch_id": "BATCH-FIXTURE",
+        "defect_class": "Short",
+        "occurrence_count": 1,
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "stage": "Stage 3: Deterministic Triage (No External VLM Configured)",
+      "vlm_attempts": 0,
+      "used_fallback": true,
+      "last_error": null,
+      "raw_decision": {
+        "detection_index": null,
+        "defect_class": "Short",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "electrical_failure_risk": "Unintended conductive bridge between traces risking dead short, overcurrent, and thermal runaway.",
+        "root_cause_hypothesis": "Under-etching, exhausted etchant bath chemistry, or developer residue between adjacent traces.",
+        "recommended_corrective_action": "Scrap or isolate bridged board; titrate copper etchant solution and verify conveyor dwell speed.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      "defect_index": 0
+    },
+    {
+      "stage": "Stage 4: Safety Guardrails",
+      "defect_index": 0,
+      "guardrail_overridden": false,
+      "override_reason": null,
+      "final_decision": {
+        "detection_index": 0,
+        "defect_class": "Short",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.2 (Short / Bridging)",
+        "electrical_failure_risk": "Unintended conductive bridge between traces risking dead short, overcurrent, and thermal runaway.",
+        "root_cause_hypothesis": "Under-etching, exhausted etchant bath chemistry, or developer residue between adjacent traces.",
+        "recommended_corrective_action": "Scrap or isolate bridged board; titrate copper etchant solution and verify conveyor dwell speed.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    },
+    {
+      "stage": "Stage 2: Ground-Truth Tools",
+      "defect_index": 1,
+      "defect_class": "Open",
+      "roi_shape": [
+        111,
+        127
+      ],
+      "ipc_compliance": {
+        "defect_class": "Open",
+        "ipc_class": "Class 2",
+        "violates_ipc": true,
+        "ipc_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "max_allowed_px": 0,
+        "measured_px": 2961
+      },
+      "batch_trend": {
+        "batch_id": "BATCH-FIXTURE",
+        "defect_class": "Open",
+        "occurrence_count": 1,
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "stage": "Stage 3: Deterministic Triage (No External VLM Configured)",
+      "vlm_attempts": 0,
+      "used_fallback": true,
+      "last_error": null,
+      "raw_decision": {
+        "detection_index": null,
+        "defect_class": "Open",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      "defect_index": 1
+    },
+    {
+      "stage": "Stage 4: Safety Guardrails",
+      "defect_index": 1,
+      "guardrail_overridden": false,
+      "override_reason": null,
+      "final_decision": {
+        "detection_index": 1,
+        "defect_class": "Open",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    },
+    {
+      "stage": "Stage 2: Ground-Truth Tools",
+      "defect_index": 2,
+      "defect_class": "Open",
+      "roi_shape": [
+        110,
+        107
+      ],
+      "ipc_compliance": {
+        "defect_class": "Open",
+        "ipc_class": "Class 2",
+        "violates_ipc": true,
+        "ipc_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "max_allowed_px": 0,
+        "measured_px": 1978
+      },
+      "batch_trend": {
+        "batch_id": "BATCH-FIXTURE",
+        "defect_class": "Open",
+        "occurrence_count": 2,
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "stage": "Stage 3: Deterministic Triage (No External VLM Configured)",
+      "vlm_attempts": 0,
+      "used_fallback": true,
+      "last_error": null,
+      "raw_decision": {
+        "detection_index": null,
+        "defect_class": "Open",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      },
+      "defect_index": 2
+    },
+    {
+      "stage": "Stage 4: Safety Guardrails",
+      "defect_index": 2,
+      "guardrail_overridden": false,
+      "override_reason": null,
+      "final_decision": {
+        "detection_index": 2,
+        "defect_class": "Open",
+        "disposition": "SCRAP",
+        "severity": "CRITICAL",
+        "ipc_standard_clause": "IPC-A-600 Section 2.2.1 (Open Circuit)",
+        "electrical_failure_risk": "Complete circuit discontinuity causing open signal net or interrupted power delivery.",
+        "root_cause_hypothesis": "Over-etching, photoresist flaking, or mechanical scratch on photomask film.",
+        "recommended_corrective_action": "Scrap defective PCB immediately; inspect photoresist lamination rollers and etchant spray nozzle pressure.",
+        "halt_production_line": false,
+        "guardrail_overridden": false,
+        "override_reason": null
+      }
+    }
+  ],
+  "batch_summary": [
+    {
+      "batch_id": "BATCH-FIXTURE",
+      "defect_class": "Open",
+      "occurrence_count": 2,
+      "threshold_exceeded": false
+    },
+    {
+      "batch_id": "BATCH-FIXTURE",
+      "defect_class": "Short",
+      "occurrence_count": 1,
+      "threshold_exceeded": false
+    }
+  ],
+  "template_b64": "data:image/png;base64,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",
+  "test_b64": "data:image/png;base64,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",
+  "diff_b64": "data:image/png;base64,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"
+}

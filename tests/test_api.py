@@ -246,3 +246,45 @@ def test_benchmark_endpoint(client: TestClient) -> None:
     else:
         assert data["dataset_audit"]["trainval_count"] == 1000
         assert data["dataset_audit"]["test_count"] == 500
+
+
+def test_health_check_endpoint(client: TestClient) -> None:
+    """GET /api/health should return status ok, API version, detector backend, and dataset flag."""
+    res = client.get("/api/health")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "ok"
+    assert data["version"] == "1.2.0"
+    assert data["detector_backend"] in ("yolov8", "onnx_baseline")
+    assert "execution_provider" in data
+    assert "dataset_loaded" in data
+
+
+def test_upload_triage_return_images_false_and_detection_index(client: TestClient) -> None:
+    """POST /api/upload-triage with return_images=False should omit b64 images and link decisions."""
+    from core.data.deeppcb_loader import MOCK_DEEPPCB_ROOT
+    template_path = MOCK_DEEPPCB_ROOT / "group20085" / "20085" / "20085000_temp.jpg"
+    test_path = MOCK_DEEPPCB_ROOT / "group20085" / "20085" / "20085000_test.jpg"
+
+    files = {
+        "template_file": ("template.jpg", template_path.read_bytes(), "image/jpeg"),
+        "test_file": ("test.jpg", test_path.read_bytes(), "image/jpeg"),
+    }
+    data = {
+        "batch_id": "BATCH-NO-IMG",
+        "return_images": "false",
+    }
+    res = client.post("/api/upload-triage", files=files, data=data)
+    assert res.status_code == 200
+    res_data = res.json()
+    assert res_data["template_b64"] is None
+    assert res_data["test_b64"] is None
+    assert res_data["diff_b64"] is None
+
+    # Verify detection_index and defect_class on decisions
+    report = res_data["report"]
+    assert len(report["decisions"]) == len(report["detections"])
+    for idx, decision in enumerate(report["decisions"]):
+        assert decision["detection_index"] == idx
+        assert decision["defect_class"] == report["detections"][idx]["defect_class"]
+

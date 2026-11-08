@@ -35,12 +35,12 @@ app = FastAPI(
         "and apply pixel-area rules plus safety overrides. An optional VLM callable "
         "can phrase the decision; it does not edit boxes."
     ),
-    version="1.1.0",
+    version="1.2.0",
 )
 
-# Mock boards are test-only. pytest sets DEEPPCB_ALLOW_MOCK; the server does not.
+# Fall back to the bundled mock fixture when the full dataset is not mounted (BC-5).
 _IS_TEST_ENV = os.environ.get("DEEPPCB_ALLOW_MOCK") == "1"
-dataset = DeepPCBDataset(allow_mock=_IS_TEST_ENV)
+dataset = DeepPCBDataset(allow_mock=True)
 
 DETECTOR_BACKEND = os.environ.get("DETECTOR_BACKEND", "auto").lower()
 if DETECTOR_BACKEND in ("yolo", "yolov8") or (
@@ -213,6 +213,7 @@ def _execute_triage_pipeline(
     simulate_rogue_vlm: bool,
     colorize_pcb: bool,
     gt_defect_count: int,
+    return_images: bool = True,
 ) -> dict[str, Any]:
     """Shared execution helper for `/api/agent-triage` and `/api/upload-triage`."""
     if clean_board_mode:
@@ -262,9 +263,34 @@ def _execute_triage_pipeline(
         "report": report.model_dump(),
         "trace": trace,
         "batch_summary": [b.model_dump() for b in batch_summary],
-        "template_b64": _encode_png_b64(template_img, colorize_pcb=colorize_pcb),
-        "test_b64": _encode_png_b64(test_img, colorize_pcb=colorize_pcb),
-        "diff_b64": _encode_png_b64(diff_map, apply_heatmap=True),
+        "template_b64": (
+            _encode_png_b64(template_img, colorize_pcb=colorize_pcb)
+            if return_images
+            else None
+        ),
+        "test_b64": (
+            _encode_png_b64(test_img, colorize_pcb=colorize_pcb)
+            if return_images
+            else None
+        ),
+        "diff_b64": (
+            _encode_png_b64(diff_map, apply_heatmap=True)
+            if return_images
+            else None
+        ),
+    }
+
+
+@app.get("/api/health")
+def health_check() -> dict[str, Any]:
+    """Health status and metadata for industrial client liveness monitoring (BC-1)."""
+    detector_backend_name = "yolov8" if isinstance(detector, YOLOv8PCBDetector) else "onnx_baseline"
+    return {
+        "status": "ok",
+        "version": app.version,
+        "detector_backend": detector_backend_name,
+        "execution_provider": getattr(detector, "execution_provider", "unknown"),
+        "dataset_loaded": not getattr(dataset, "is_mock", False),
     }
 
 
@@ -381,6 +407,7 @@ async def upload_and_triage(
     ipc_class: IPCClass = Form(default="Class 2"),
     simulate_rogue_vlm: bool = Form(default=False),
     colorize_pcb: bool = Form(default=False),
+    return_images: bool = Form(default=True, description="When False, omits b64 images to accelerate batch inspection (BC-3)."),
 ) -> dict[str, Any]:
     """Decode uploaded Template & Tested PCB images, normalize to 640x640, and run 4-stage triage."""
     tpl_bytes = await template_file.read()
@@ -418,6 +445,7 @@ async def upload_and_triage(
         simulate_rogue_vlm=simulate_rogue_vlm,
         colorize_pcb=colorize_pcb,
         gt_defect_count=0,
+        return_images=return_images,
     )
 
 
